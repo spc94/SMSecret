@@ -1,0 +1,114 @@
+package com.example.spice.smsecret;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Telephony;
+import android.telephony.SmsMessage;
+import android.util.Base64;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.PublicKey;
+import java.util.Vector;
+
+/**
+ * Created by spice on 31/07/16.
+ */
+public class SmsReceiver extends BroadcastReceiver {
+    Vector<Contacts> contactsVector = new Vector<>();
+
+    private static SmsReceiver ins;
+    public SmsReceiver getInstance(){
+        return ins;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        Log.d("DEBUG_MODE","Checking SMS");
+        ins=this;
+        Bundle bundle = intent.getExtras();
+        DatabaseHandler db = new DatabaseHandler(context);
+        try {
+
+            if (bundle != null) {
+                String senderNumber = null;
+                String msg = "";
+
+                if (Build.VERSION.SDK_INT >= 19) { //KITKAT
+
+                    SmsMessage[] msgs = Telephony.Sms.Intents.getMessagesFromIntent(intent);
+                    for(int i=0;i<msgs.length;i++)
+                        msg += msgs[i].getDisplayMessageBody();
+                    senderNumber = msgs[0].getOriginatingAddress();
+                } else {
+                    Object pdus[] = (Object[]) bundle.get("pdus");
+                    for(int i=0;i<pdus.length;i++)
+                        msg += SmsMessage.createFromPdu((byte[]) pdus[i]).getDisplayMessageBody();
+                    senderNumber = SmsMessage.createFromPdu((byte[])pdus[0]).getOriginatingAddress();
+                }
+                Log.d("DEB","From: "+senderNumber+"\nMsg: "+msg);
+                Log.d("DEB","Root of Files: "+context.getFilesDir().getAbsolutePath());
+                msg = encRSA(msg,context);
+                Contacts contact = new Contacts(Integer.parseInt(senderNumber),msg);
+                Log.d("DEB2",String.valueOf(contact.getContactNumber()));
+                Log.d("DEB2",contact.getMessages());
+                db.addMessage(contact);
+                db.close();
+                //Reads database into textView array
+                InboxActivity.getInstance().textView = InboxActivity.getInstance().populateTextViewArray();
+                //Clears all the textViews
+                InboxActivity.getInstance().cleanLayout();
+                //Writes everything from the textView array to the layout
+                InboxActivity.getInstance().addContactsToLayout(InboxActivity.getInstance().contactsLayout,
+                        InboxActivity.getInstance().textView,InboxActivity.getInstance().sizeOfTextViewArray);
+                InboxActivity.getInstance().initTextViewListeners();
+                MessagesActivity.getInstance().initMessages(contact.getContactNumber());
+
+
+
+
+            }
+        }catch (Exception e){
+            Log.e("DEBUG_MODE","Exception");
+            e.printStackTrace();
+        }
+    }
+
+    public String encRSA(String msg, Context context) throws IOException, ClassNotFoundException {
+        ObjectInputStream inputStream = null;
+        RSA rsa = new RSA();
+        //Read Public key from File
+        File publicKeyFile = new File(context.getFilesDir(),"public.key");
+        inputStream = new ObjectInputStream(new FileInputStream(publicKeyFile));
+        final PublicKey publicKey = (PublicKey) inputStream.readObject();
+
+        final byte[] cipherText = rsa.encrypt(msg, publicKey);
+        byte[] cipherTextEncoded = Base64.encode(cipherText,Base64.DEFAULT);
+        String cipherTextString = new String(cipherTextEncoded);
+
+        return cipherTextString;
+
+    }
+
+    public boolean checkContactExists(int senderNumber){
+        for (int i = 0; i < contactsVector.size(); i++) {
+            if(senderNumber == contactsVector.elementAt(i).getContactNumber())
+                return true;
+        }
+        return false;
+    }
+
+    public void addContact(int senderNumber, String message){
+        Contacts contact = new Contacts(senderNumber,message);
+        contactsVector.add(contact);
+    }
+
+
+
+}

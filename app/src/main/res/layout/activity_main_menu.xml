@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/activity_main_menu">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Welcome to Smsecret"
+        android:id="@+id/menuHeader"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Inbox"
+        android:id="@+id/buttonInbox"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="75dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:id="@+id/buttonSettings"
+        android:layout_below="@+id/buttonInbox"
+        android:layout_alignLeft="@+id/buttonInbox"
+        android:layout_alignStart="@+id/buttonInbox"
+        android:layout_marginTop="62dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Compose"
+        android:id="@+id/buttonCompose"
+        android:layout_alignTop="@+id/buttonInbox"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="75dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quit"
+        android:id="@+id/button4"
+        android:layout_alignBottom="@+id/buttonSettings"
+        android:layout_alignLeft="@+id/buttonCompose"
+        android:layout_alignStart="@+id/buttonCompose" />
+</RelativeLayout>
