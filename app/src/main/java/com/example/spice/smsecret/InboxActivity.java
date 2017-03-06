@@ -21,6 +21,17 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Override
+    protected void onResume(){
+        super.onResume();
+        ins = this;
+        contactsLayout = (LinearLayout) findViewById(R.id.contacts);
+        cleanLayout();
+        textView = populateTextViewArray();
+        addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
+        initTextViewListeners();
+    }
+
+    @Override
     public void onClick(View arg0) {
         Log.d("CLICK","Clicked a contact number! ");
         TextView clickedView = (TextView)arg0;
@@ -48,7 +59,8 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         Log.d("DEB","Size of DB "+size);
         final TextView[] myTextViews  = new TextView[size];
 
-        for (int i = 1, j= 0; i < size+1; i++) {
+        //for (int i = 1, j = 0; i < size+1; i++) {
+        for (int i=size,j = 0; i>=1;i-- )  {
             int contactNumber = db.getMessage(i).getContactNumber();
             if (checkContactExists(myTextViews, contactNumber,j) == false) {
                 final TextView rowTextView = new TextView(this);
@@ -92,6 +104,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
                 contactsLayout.addView(tv[i]);
         }
     }
+
 
     public boolean checkVisited(int contactNumber){
         boolean checkVisited = db.checkVisited(contactNumber);

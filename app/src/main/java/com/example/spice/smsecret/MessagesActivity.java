@@ -22,6 +22,8 @@ import java.util.Vector;
 /**
  * Created by spice on 02/08/16.
  */
+
+
 public class MessagesActivity extends Activity {
     public LinearLayout messagesLayout;
     private static MessagesActivity ins;
