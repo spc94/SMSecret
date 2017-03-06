@@ -1,6 +1,7 @@
 package com.example.spice.smsecret;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,7 +22,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View arg0) {
-        Log.d("CLICK","Ouchie in my mouth! ");
+        Log.d("CLICK","Clicked a contact number! ");
         TextView clickedView = (TextView)arg0;
         int id = Integer.parseInt(clickedView.getText().toString());
         Log.d("DEB","ID: "+id);
@@ -36,6 +37,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_inbox);
         ins = this;
         contactsLayout = (LinearLayout) findViewById(R.id.contacts);
+        cleanLayout();
         textView = populateTextViewArray();
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
         initTextViewListeners();
@@ -80,9 +82,21 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void addContactsToLayout(LinearLayout contactsLayout, TextView[] tv, int size){
+        //int flag = 0;
         for (int i = 0; i < size+1; i++) {
-            contactsLayout.addView(tv[i]);
+                tv[i].setTextSize(25);
+                if(!checkVisited(Integer.parseInt(tv[i].getText().toString())))
+                    tv[i].setBackgroundColor(Color.rgb(0,160,0));
+                else
+                    tv[i].setBackgroundColor(Color.GREEN);
+                contactsLayout.addView(tv[i]);
         }
+    }
+
+    public boolean checkVisited(int contactNumber){
+        boolean checkVisited = db.checkVisited(contactNumber);
+        Log.d("DEBUG","VISITED BEFORE: "+checkVisited);
+        return checkVisited;
     }
 
     public void initTextViewListeners(){
@@ -92,6 +106,6 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void cleanLayout(){
-        // contactsLayout.removeAllViews();
+        contactsLayout.removeAllViews();
     }
 }

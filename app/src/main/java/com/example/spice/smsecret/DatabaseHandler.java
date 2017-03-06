@@ -28,6 +28,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     private static final String KEY_ID = "msgId";
     private static final String KEY_NUMBER = "phoneNumber";
     private static final String KEY_MSG = "message";
+    private static final String KEY_VISITED = "visited";
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -38,7 +39,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_CONTACTS + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " INTEGER,"
-                + KEY_MSG + " TEXT" + ")";
+                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
 
@@ -57,6 +58,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         ContentValues values = new ContentValues();
         values.put(KEY_NUMBER, contact.getContactNumber()); // Contact Name
         values.put(KEY_MSG, contact.getMessages()); // Contact Phone Number
+        values.put(KEY_VISITED,0);
 
         // Inserting Row
         db.insert(TABLE_CONTACTS, null, values);
@@ -66,18 +68,49 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     public Contacts getMessage(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.query(TABLE_CONTACTS, new String[] { KEY_ID,
-                        KEY_NUMBER, KEY_MSG }, KEY_ID + "=?",
+        Cursor cursor = db.query(TABLE_CONTACTS, new String[] {KEY_ID,
+                        KEY_NUMBER, KEY_MSG, KEY_VISITED}, KEY_ID + "=?",
                 new String[] { String.valueOf(id) }, null, null, null, null);
         if (cursor != null) {
             cursor.moveToNext();
 
         }
         Contacts contact = new Contacts(Integer.parseInt(cursor.getString(1)),
-                cursor.getString(2));
-        // return contact
+                cursor.getString(2), Integer.parseInt(cursor.getString(3)));
+
         return contact;
     }
+
+    public void changeVisitedTrue(int contactNumber){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String updateQuery = "UPDATE " + TABLE_CONTACTS +
+                             " SET " + KEY_VISITED + "='1' WHERE " + KEY_NUMBER + "=?";
+
+        db.execSQL(updateQuery,new String[] {String.valueOf(contactNumber)});
+
+    }
+
+    public boolean checkVisited(int contactNumber){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACTS + " WHERE " + KEY_NUMBER + "=?";
+
+        Cursor cursor = db.rawQuery(selectQuery,new String[] {String.valueOf(contactNumber)});
+
+        boolean flag = true;
+
+        if(cursor.moveToFirst()){
+            do{
+                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
+                if(cursor.getString(3).equals("0"))
+                    flag = false;
+            }while(cursor.moveToNext());
+        }
+
+        return flag;
+    }
+
 
     public List<Contacts> getAllMessages() {
         List<Contacts> contactList = new ArrayList<Contacts>();
@@ -93,6 +126,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
                 Contacts contact = new Contacts();
                 contact.setContactNumber(Integer.parseInt(cursor.getString(1)));
                 contact.setMessage(cursor.getString(2));
+                contact.setVisited(Integer.parseInt(cursor.getString(3)));
                 // Adding contact to list
                 contactList.add(contact);
             } while (cursor.moveToNext());

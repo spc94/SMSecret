@@ -55,9 +55,10 @@ public class SmsReceiver extends BroadcastReceiver {
                 Log.d("DEB","From: "+senderNumber+"\nMsg: "+msg);
                 Log.d("DEB","Root of Files: "+context.getFilesDir().getAbsolutePath());
                 msg = encRSA(msg,context);
-                Contacts contact = new Contacts(Integer.parseInt(senderNumber),msg);
+                Contacts contact = new Contacts(Integer.parseInt(senderNumber),msg,0);
                 Log.d("DEB2",String.valueOf(contact.getContactNumber()));
                 Log.d("DEB2",contact.getMessages());
+
                 db.addMessage(contact);
                 db.close();
                 //Reads database into textView array
@@ -105,7 +106,7 @@ public class SmsReceiver extends BroadcastReceiver {
     }
 
     public void addContact(int senderNumber, String message){
-        Contacts contact = new Contacts(senderNumber,message);
+        Contacts contact = new Contacts(senderNumber,message,0);
         contactsVector.add(contact);
     }
 

@@ -2,7 +2,9 @@ package com.example.spice.smsecret;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,6 +34,10 @@ public class MessagesActivity extends Activity {
         Bundle b = getIntent().getExtras();
         //Assigned passed parameter to a var
         int contactNumber = b.getInt("contact");
+
+        DatabaseHandler db = new DatabaseHandler(this);
+        db.changeVisitedTrue(contactNumber);
+
         try {
             initMessages(contactNumber);
         } catch (GeneralSecurityException e) {
@@ -106,6 +112,9 @@ public class MessagesActivity extends Activity {
 
     public void addMessagesToLayout(TextView[] tvArray){
         for (int i = tvArray.length-1; i >= 0; i--) {
+            String temp = tvArray[i].getText().toString();
+            tvArray[i].setTextSize(24);
+            tvArray[i].setText(temp + "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
             messagesLayout.addView(tvArray[i]);
         }
     }
