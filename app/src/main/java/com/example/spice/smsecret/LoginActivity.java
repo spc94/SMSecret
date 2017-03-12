@@ -1,6 +1,7 @@
 package com.example.spice.smsecret;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
@@ -48,14 +49,16 @@ public class LoginActivity extends Activity {
                 try {
                     if(passwordCheck(passwordEditText.getText().toString()
                             ,generateFileToDecrypt(),randomString)==true) {
-                        MainActivity.getInstance().password = passwordEditText.getText().toString();
+                        //MainActivity.getInstance().password = passwordEditText.getText().toString();
                         MainActivity.getInstance().loginComplete=true;
                         runOnUiThread(new Runnable(){
                             public void run() {
                                 Toast.makeText(getApplicationContext(), "Welcome back :)",Toast.LENGTH_SHORT).show();
                             }
                         });
-                        setResult(1);
+                        Intent returnIntent = new Intent();
+                        returnIntent.putExtra("result",passwordEditText.getText().toString());
+                        setResult(Activity.RESULT_OK,returnIntent);
                         finish();
                     }
                     else{

@@ -126,7 +126,14 @@ public class SetPasswordActivity extends Activity {
                             //Exit Fragment
                             Log.d("DEBUG","Everything generated");
                             MainActivity.getInstance().loginComplete=true;
+                            //MainActivity.getInstance().password = password.getText().toString();
+
+
+                            Intent returnIntent = new Intent();
+                            returnIntent.putExtra("result",password.getText().toString());
+                            setResult(Activity.RESULT_OK,returnIntent);
                             finish();
+
                             //doRestart(getApplicationContext());
                             Log.d("DEBUG","Fragment Exited?");
                         } catch (NoSuchAlgorithmException e) {

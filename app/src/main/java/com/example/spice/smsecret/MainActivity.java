@@ -1,5 +1,6 @@
 package com.example.spice.smsecret;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,9 +27,12 @@ public class MainActivity extends FragmentActivity{
         if(loadSystemFiles()==false) {
             Intent intent = new Intent(this, SetPasswordActivity.class);
             Log.d("DEBUG","Before start");
-            startActivity(intent);
+            startActivityForResult(intent,10);
+            //startActivity(intent);
             password = intent.getStringExtra("result");
-
+            /*Log.d("DEBUG","XXXX - "+password);
+            intent = new Intent(this, LoginActivity.class);
+            startActivityForResult(intent,10);*/
         }
         //If opening app for the first time, it won't request login
         else if(true) {
@@ -47,8 +51,9 @@ public class MainActivity extends FragmentActivity{
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode==1) {
+        if(resultCode== Activity.RESULT_OK) {
             Log.d("DEBUG","Activity Result");
+            this.password = data.getStringExtra("result");
             Intent intent2 = new Intent(this, MainMenuActivity.class);
             startActivityForResult(intent2,9);
         }
