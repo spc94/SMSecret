@@ -3,6 +3,7 @@ package com.example.spice.smsecret;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Telephony;
@@ -10,11 +11,14 @@ import android.telephony.SmsMessage;
 import android.util.Base64;
 import android.util.Log;
 
+import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.PublicKey;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -52,33 +56,45 @@ public class SmsReceiver extends BroadcastReceiver {
                         msg += SmsMessage.createFromPdu((byte[]) pdus[i]).getDisplayMessageBody();
                     senderNumber = SmsMessage.createFromPdu((byte[])pdus[0]).getOriginatingAddress();
                 }
-                Log.d("DEB","From: "+senderNumber+"\nMsg: "+msg);
-                Log.d("DEB","Root of Files: "+context.getFilesDir().getAbsolutePath());
-                msg = encRSA(msg,context);
-                Contacts contact = new Contacts(Integer.parseInt(senderNumber),msg,0);
-                Log.d("DEB2",String.valueOf(contact.getContactNumber()));
-                Log.d("DEB2",contact.getMessages());
+                if(checkContactWhitelisted(Integer.parseInt(senderNumber))) {
+                    abortBroadcast();
+                    Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
+                    Log.d("DEB", "Root of Files: " + context.getFilesDir().getAbsolutePath());
+                    msg = encRSA(msg, context);
+                    Contacts contact = new Contacts(Integer.parseInt(senderNumber), msg, 0);
+                    Log.d("DEB2", String.valueOf(contact.getContactNumber()));
+                    Log.d("DEB2", contact.getMessages());
 
-                db.addMessage(contact);
-                db.close();
-                //Reads database into textView array
-                InboxActivity.getInstance().textView = InboxActivity.getInstance().populateTextViewArray();
-                //Clears all the textViews
-                InboxActivity.getInstance().cleanLayout();
-                //Writes everything from the textView array to the layout
-                InboxActivity.getInstance().addContactsToLayout(InboxActivity.getInstance().contactsLayout,
-                        InboxActivity.getInstance().textView,InboxActivity.getInstance().sizeOfTextViewArray);
-                InboxActivity.getInstance().initTextViewListeners();
-                MessagesActivity.getInstance().initMessages(contact.getContactNumber());
+                    db.addMessage(contact);
+                    db.close();
 
 
+                    //Reads database into textView array
+                    InboxActivity.getInstance().textView = InboxActivity.getInstance().populateTextViewArray();
+                    //Clears all the textViews
+                    InboxActivity.getInstance().cleanLayout();
+                    //Writes everything from the textView array to the layout
+                    InboxActivity.getInstance().addContactsToLayout(InboxActivity.getInstance().contactsLayout,
+                            InboxActivity.getInstance().textView, InboxActivity.getInstance().sizeOfTextViewArray);
+                    InboxActivity.getInstance().initTextViewListeners();
+                    MessagesActivity.getInstance().initMessages(contact.getContactNumber());
 
+                }
 
             }
         }catch (Exception e){
             Log.e("DEBUG_MODE","Exception");
             e.printStackTrace();
         }
+    }
+
+    public boolean checkContactWhitelisted(int senderNumber){
+        java.util.List<String> listOfWhitelistedContacts = WhitelistedNumbersDAL.getAllWhitelistedNumbers();
+        for(int i=0; i<listOfWhitelistedContacts.size();i++){
+            if(listOfWhitelistedContacts.get(i).equals(""+senderNumber))
+                return true;
+        }
+        return false;
     }
 
     public String encRSA(String msg, Context context) throws IOException, ClassNotFoundException {
@@ -111,5 +127,6 @@ public class SmsReceiver extends BroadcastReceiver {
     }
 
 
-
+    private class List<T> {
+    }
 }

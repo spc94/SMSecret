@@ -23,6 +23,7 @@ public class Contacts {
         setMessage(message);
     }
 
+
     public void setContactNumber(int contactNumber) {
         this.contactNumber = contactNumber;
     }

@@ -1,7 +1,11 @@
 package com.example.spice.smsecret;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Base64;
@@ -116,14 +120,14 @@ public class SetPasswordActivity extends Activity {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     // TODO do something
                     if (password.getText().toString().contentEquals(passwordConfirmation.getText().toString())){
-                        Log.d("DEBUG","Text is the same");
+                        Log.d("DEBUG","Password is the same");
                         try {
                             generateSystemFiles(password.getText().toString());
                             //Exit Fragment
                             Log.d("DEBUG","Everything generated");
                             MainActivity.getInstance().loginComplete=true;
                             finish();
-
+                            //doRestart(getApplicationContext());
                             Log.d("DEBUG","Fragment Exited?");
                         } catch (NoSuchAlgorithmException e) {
                             e.printStackTrace();
@@ -132,7 +136,7 @@ public class SetPasswordActivity extends Activity {
                         }
                     }
                     else {
-                        Log.d("DEBUG", "Text is different");
+                        Log.d("DEBUG", "Passwords are different");
                         Toast.makeText(getApplicationContext(), "The passwords don't match", Toast.LENGTH_SHORT).show();
                         handled = true;
                     }
@@ -144,6 +148,38 @@ public class SetPasswordActivity extends Activity {
 
 
 
+    }
+
+    public static void doRestart(Context c){
+        try{
+            if(c!=null){
+                PackageManager pm = c.getPackageManager();
+
+                if(pm!=null){
+                    Intent mStartActivity = pm.getLaunchIntentForPackage(c.getPackageName());
+
+                    if(mStartActivity !=null){
+                        mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        int mPendingIntentId = 22344;
+                        PendingIntent mPendingIntent = PendingIntent.getActivity(c,
+                                mPendingIntentId, mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+                        AlarmManager mgr = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+                        mgr.set(AlarmManager.RTC, System.currentTimeMillis()+500, mPendingIntent);
+
+                        System.exit(0);
+
+                    } else{Log.e("DEBUG","Was not able to restart app, mStart null");
+
+                    }
+                }else{
+                    Log.e("DEBUG","Was not able to restart app, PM null");
+                }
+            }else{
+                Log.e("DEBUG","Was not able to restart app, Context null");
+            }
+        }catch (Exception ex){
+            Log.e("DEBUG","Was not able to restart app");
+        }
     }
 
     public void cleanLayout(){

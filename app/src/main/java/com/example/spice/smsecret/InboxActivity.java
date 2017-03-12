@@ -15,6 +15,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     public static InboxActivity ins;
     public LinearLayout contactsLayout;
     public TextView[] textView;
+    public int dbSize;
 
     public static InboxActivity getInstance(){
         return ins;
@@ -56,6 +57,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     public TextView[] populateTextViewArray(){
         int size = db.getMessagesCount();
+        dbSize = size;
         Log.d("DEB","Size of DB "+size);
         final TextView[] myTextViews  = new TextView[size];
 
@@ -77,8 +79,10 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
                 continue;
 
         }
-        Log.d("DEB","SIZE OF ARRAY = "+sizeOfTextViewArray);
-        Log.d("DEB","Contents of last position ="+myTextViews[sizeOfTextViewArray].getText().toString());
+        //Log.d("DEB","SIZE OF ARRAY = "+sizeOfTextViewArray);
+        //Log.d("DEB","Contents of last position ="+myTextViews[sizeOfTextViewArray].getText().toString());
+        Log.d("DEBUG 69","Size Of DB: "+size);
+        Log.d("DEBUG 69","Size Of Textview Array: "+sizeOfTextViewArray);
         return myTextViews;
 
     }
@@ -95,6 +99,10 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     public void addContactsToLayout(LinearLayout contactsLayout, TextView[] tv, int size){
         //int flag = 0;
+
+        if(dbSize ==0)
+            return;
+
         for (int i = 0; i < size+1; i++) {
                 tv[i].setTextSize(25);
                 if(!checkVisited(Integer.parseInt(tv[i].getText().toString())))
@@ -113,6 +121,10 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void initTextViewListeners(){
+
+        if(dbSize == 0)
+            return;
+
         for (int i = 0; i < sizeOfTextViewArray+1; i++) {
             textView[i].setOnClickListener(this);
         }

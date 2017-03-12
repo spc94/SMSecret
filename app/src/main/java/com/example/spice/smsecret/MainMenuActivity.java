@@ -25,6 +25,7 @@ public class MainMenuActivity extends Activity{
         ins = this;
         Button inboxButton = (Button) findViewById(R.id.buttonInbox);
         Button composeButton = (Button) findViewById(R.id.buttonCompose);
+        Button buttonSettings = (Button) findViewById(R.id.buttonSettings);
         Log.d("DEBUG","ON Main Menu");
         inboxButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,6 +39,14 @@ public class MainMenuActivity extends Activity{
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getInstance(),ComposeActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        buttonSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getInstance(),SettingsActivity.class);
                 startActivity(intent);
             }
         });

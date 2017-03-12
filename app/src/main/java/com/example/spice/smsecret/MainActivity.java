@@ -22,7 +22,6 @@ public class MainActivity extends FragmentActivity{
         super.onCreate(savedInstanceState);
         ins = this;
         setContentView(R.layout.activity_main);
-        Log.d("DEBUG","AT START OF MAIN ID: "+getInstance());
         //loginComplete = p.getBoolean("loginFlag");
         if(loadSystemFiles()==false) {
             Intent intent = new Intent(this, SetPasswordActivity.class);
@@ -33,6 +32,7 @@ public class MainActivity extends FragmentActivity{
         }
         //If opening app for the first time, it won't request login
         else if(true) {
+            Log.d("DEBUG","Enter Login Activity");
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent,10);
         }
