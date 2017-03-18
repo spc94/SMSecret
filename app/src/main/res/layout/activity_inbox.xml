@@ -10,7 +10,8 @@
     tools:context="com.example.spice.smsecret.InboxActivity">
     <ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:id="@+id/scrollView2">
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
@@ -28,4 +29,15 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <TextView
+        android:text="You have no new SMS's."
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/scrollView2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="58dp"
+        android:id="@+id/tvInboxWelcome"
+        android:textAlignment="textStart"
+        android:visibility="invisible" />
 </RelativeLayout>

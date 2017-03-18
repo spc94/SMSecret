@@ -1,10 +1,8 @@
 package com.example.spice.smsecret;
 
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,6 +22,8 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     public ArrayList<Integer> contactsInView = new ArrayList<>();
     public int dbSize;
 
+    public TextView tvWelcome;
+
     public static InboxActivity getInstance(){
         return ins;
     }
@@ -40,6 +40,13 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
         Log.d("DEBUG XXX", "Before Init Listeners");
         initTextViewListeners();
+        if(sizeOfTextViewArray == 0){
+            tvWelcome.setVisibility(View.VISIBLE);
+        }
+        else{
+            tvWelcome.setVisibility(View.INVISIBLE);
+        }
+
     }
 
     @Override
@@ -58,14 +65,13 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inbox);
+        tvWelcome = (TextView) findViewById(R.id.tvInboxWelcome);
         ins = this;
         contactsLayout = (LinearLayout) findViewById(R.id.contacts);
         cleanLayout();
         textView = populateTextViewArray();
-        Log.d("DEBUG XX",textView[0].getText().toString());
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
         initTextViewListeners();
-        Log.d("DONE", "DONE");
     }
 
     public TextView[] populateTextViewArray(){

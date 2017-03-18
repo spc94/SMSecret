@@ -3,13 +3,13 @@ package com.example.spice.smsecret;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 
 import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
 
@@ -18,7 +18,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.PublicKey;
-import java.util.List;
 import java.util.Vector;
 
 /**
@@ -73,6 +72,7 @@ public class SmsReceiver extends BroadcastReceiver {
                     InboxActivity.getInstance().textView = InboxActivity.getInstance().populateTextViewArray();
                     //Clears all the textViews
                     InboxActivity.getInstance().cleanLayout();
+                    InboxActivity.getInstance().tvWelcome.setVisibility(View.INVISIBLE);
                     //Writes everything from the textView array to the layout
                     InboxActivity.getInstance().addContactsToLayout(InboxActivity.getInstance().contactsLayout,
                             InboxActivity.getInstance().textView, InboxActivity.getInstance().sizeOfTextViewArray);
