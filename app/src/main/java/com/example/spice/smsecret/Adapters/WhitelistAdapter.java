@@ -15,7 +15,7 @@ import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
 
 /**
  * Created by spice on 3/9/17.git
- * .....
+ * ......git branch -d branch_name
  */
 
 public class WhitelistAdapter extends ArrayAdapter<Long> {

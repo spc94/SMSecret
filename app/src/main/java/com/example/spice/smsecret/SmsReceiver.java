@@ -78,6 +78,8 @@ public class SmsReceiver extends BroadcastReceiver {
                             InboxActivity.getInstance().textView, InboxActivity.getInstance().sizeOfTextViewArray);
                     InboxActivity.getInstance().initTextViewListeners();
                     MessagesActivity.getInstance().initMessages(contact.getContactNumber());
+                }
+                else{
 
                 }
 

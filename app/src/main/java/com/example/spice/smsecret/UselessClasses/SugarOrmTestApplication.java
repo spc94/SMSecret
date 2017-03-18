@@ -1,4 +1,4 @@
-package com.example.spice.smsecret;
+package com.example.spice.smsecret.UselessClasses;
 
 import android.content.res.Configuration;
 
