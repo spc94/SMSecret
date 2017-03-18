@@ -1,7 +1,11 @@
 package com.example.spice.smsecret;
 
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,12 +13,15 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 public class InboxActivity extends AppCompatActivity implements View.OnClickListener{
     DatabaseHandler db = new DatabaseHandler(this);
     public int sizeOfTextViewArray;
     public static InboxActivity ins;
     public LinearLayout contactsLayout;
     public TextView[] textView;
+    public ArrayList<Integer> contactsInView = new ArrayList<>();
     public int dbSize;
 
     public static InboxActivity getInstance(){
@@ -27,8 +34,11 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         ins = this;
         contactsLayout = (LinearLayout) findViewById(R.id.contacts);
         cleanLayout();
+        Log.d("DEBUG XXX", "Before Populating TV");
         textView = populateTextViewArray();
+        Log.d("DEBUG XXX", "Before Adding Contacts to Layout");
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
+        Log.d("DEBUG XXX", "Before Init Listeners");
         initTextViewListeners();
     }
 
@@ -36,7 +46,8 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     public void onClick(View arg0) {
         Log.d("CLICK","Clicked a contact number! ");
         TextView clickedView = (TextView)arg0;
-        int id = Integer.parseInt(clickedView.getText().toString());
+        Log.d("DEBUG","id: "+ clickedView.getId());
+        int id = contactsInView.get(clickedView.getId());
         Log.d("DEB","ID: "+id);
         Intent intent = new Intent(this, MessagesActivity.class);
         intent.putExtra("contact",id);
@@ -51,28 +62,48 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         contactsLayout = (LinearLayout) findViewById(R.id.contacts);
         cleanLayout();
         textView = populateTextViewArray();
+        Log.d("DEBUG XX",textView[0].getText().toString());
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
         initTextViewListeners();
+        Log.d("DONE", "DONE");
     }
 
     public TextView[] populateTextViewArray(){
         int size = db.getMessagesCount();
         dbSize = size;
         Log.d("DEB","Size of DB "+size);
+        //Note - The number of textviews should depend on amount of different contacts and not messages
         final TextView[] myTextViews  = new TextView[size];
+        contactsInView.clear();
 
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=size,j = 0; i>=1;i-- )  {
             int contactNumber = db.getMessage(i).getContactNumber();
-            if (checkContactExists(myTextViews, contactNumber,j) == false) {
-                final TextView rowTextView = new TextView(this);
-                rowTextView.setText(String.valueOf(contactNumber));
-                //contactsLayout.addView(rowTextView);
-                myTextViews[j] = rowTextView;
+            if (checkContactExists(contactNumber) == false) {
+                contactsInView.add(contactNumber);
+                String contactInPhonebook = checkWhitelistedContactExistsOnPhonebook(contactNumber);
+                Log.d("DEBUG X", "contactInPhonebook = "+contactInPhonebook);
 
+                //If contact doesn't exist in phonebook we use number
+                if(contactInPhonebook == null) {
+                    final TextView rowTextView = new TextView(this);
+                    rowTextView.setText(String.valueOf(contactNumber));
+                    rowTextView.setId(j);
+                    myTextViews[j] = rowTextView;
+                    Log.d("DEBUG X","CONTACT IS NULL");
+                }
+                // If contact exists in phonebook we use name instead
+                else{
+                    final TextView rowTextView = new TextView(this);
+                    rowTextView.setText(contactInPhonebook);
+                    rowTextView.setId(j);
+                    myTextViews[j] = rowTextView;
+                    Log.d("DEBUG X","CONTACT IS "+contactInPhonebook);
+                }
+                Log.d("DEBUG X","Content of new TextView = "+myTextViews[j].getText().toString());
                 //Only increments array if we are not repeating contact
-                sizeOfTextViewArray = j;
                 j++;
+                sizeOfTextViewArray = j;
 
             }
             else
@@ -87,10 +118,43 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    public boolean checkContactExists(TextView[] tv, int contactNumber, int currMaxSize){
+    public String checkWhitelistedContactExistsOnPhonebook(int number) {
+        ArrayList<String[]> contactsInPhonebook = getAllContactsFromPhonebook();
+        for (int i = 0; i < contactsInPhonebook.size(); i++) {
+            if (number == Integer.parseInt(contactsInPhonebook.get(i)[1]))
+                return contactsInPhonebook.get(i)[0];
+        }
+        return null;
+    }
 
-        for(int i=0; i<currMaxSize;i++) {
-            if (Integer.parseInt(tv[i].getText().toString()) == contactNumber)//getting text when there's nothing yet
+    public ArrayList<String[]> getAllContactsFromPhonebook(){
+        ArrayList<String[]> contacts = new ArrayList<>();
+
+        Cursor managedCursor = getContentResolver()
+                .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        new String[]
+                                {
+                                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                                ContactsContract.CommonDataKinds.Phone.NUMBER
+                                }, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
+
+        Log.d("DEBUG CONTACTS", "SIZE OF PHONEBOOK: "+managedCursor.getColumnCount());
+
+        while(managedCursor.moveToNext()){
+            String numberWithoutSpaces = managedCursor.getString(1).replaceAll(" ","");
+            String [] temp = {managedCursor.getString(0),numberWithoutSpaces};
+            contacts.add(temp);
+            Log.d("DEBUG CONTACTS",""+managedCursor.getString(0));
+            Log.d("DEBUG CONTACTS",""+managedCursor.getString(1));
+        }
+
+        return contacts;
+    }
+
+    public boolean checkContactExists(int contactNumber){
+
+        for(int i=0; i<contactsInView.size();i++) {
+            if (contactNumber == contactsInView.get(i))
                 return true;
         }
 
@@ -103,9 +167,10 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         if(dbSize ==0)
             return;
 
-        for (int i = 0; i < size+1; i++) {
+        for (int i = 0; i < size; i++) {
+                Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
                 tv[i].setTextSize(25);
-                if(!checkVisited(Integer.parseInt(tv[i].getText().toString())))
+                if(!checkVisited(contactsInView.get(i)))
                     tv[i].setBackgroundColor(Color.rgb(0,160,0));
                 else
                     tv[i].setBackgroundColor(Color.GREEN);
@@ -125,7 +190,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         if(dbSize == 0)
             return;
 
-        for (int i = 0; i < sizeOfTextViewArray+1; i++) {
+        for (int i = 0; i < sizeOfTextViewArray; i++) {
             textView[i].setOnClickListener(this);
         }
     }

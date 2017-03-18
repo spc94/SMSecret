@@ -80,7 +80,9 @@ public class SmsReceiver extends BroadcastReceiver {
                     MessagesActivity.getInstance().initMessages(contact.getContactNumber());
                 }
                 else{
-
+                    Intent redirectIntent = intent;
+                    redirectIntent.setClassName("com.google.android.apps.messaging","SmsReceiver.class");
+                    context.startActivity(redirectIntent);
                 }
 
             }
