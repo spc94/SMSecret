@@ -80,9 +80,14 @@ public class SmsReceiver extends BroadcastReceiver {
                     MessagesActivity.getInstance().initMessages(contact.getContactNumber());
                 }
                 else{
+                    //Intent newIntent = new Intent();
                     Intent redirectIntent = intent;
-                    redirectIntent.setClassName("com.google.android.apps.messaging","SmsReceiver.class");
+                    redirectIntent.setClassName("com.android.mms.transaction","com.android.mms.transaction.SmsReceiver");
+                    redirectIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Log.d("DEBUG","Enters else");
                     context.startActivity(redirectIntent);
+                    //context.startActivity(redirectIntent);
+                    //context.sendOrderedBroadcast(redirectIntent,null);
                 }
 
             }

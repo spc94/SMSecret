@@ -1,9 +1,12 @@
 package com.example.spice.smsecret;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
@@ -18,11 +21,13 @@ public class MainActivity extends FragmentActivity{
 
     public String password = null;
     public boolean loginComplete = false;
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ins = this;
         setContentView(R.layout.activity_main);
+        //Log.d("DEBUG PACKAGE ",""+Telephony.Sms.getDefaultSmsPackage(getApplicationContext()));
         //loginComplete = p.getBoolean("loginFlag");
         if(loadSystemFiles()==false) {
             Intent intent = new Intent(this, SetPasswordActivity.class);
