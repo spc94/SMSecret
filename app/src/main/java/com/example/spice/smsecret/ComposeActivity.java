@@ -47,8 +47,8 @@ import java.util.Vector;
 
 public class ComposeActivity extends AppCompatActivity {
 
-    int position = 0;
-    int sizeOfPrevNumber = 0;
+    int sizeOfEditTextBefore = 0;
+
     boolean canListenInput = true;
     final Vector<Long> contactsToSend = new Vector<>();
     final SpannableStringBuilder ssb = new SpannableStringBuilder();
@@ -72,21 +72,23 @@ public class ComposeActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String messageContents = etMessageContents.getText().toString();
                 String destinations = "smsto:";
-                for(int i = 0; i<contactsToSend.size();i++){
+                for (int i = 0; i < contactsToSend.size(); i++) {
                     destinations = destinations + contactsToSend.elementAt(i).toString() + ";";
                 }
-                destinations = destinations.subSequence(0,destinations.length()-1).toString();
-                Log.d("DEBUG","Destination String: "+destinations);
+                destinations = destinations.subSequence(0, destinations.length() - 1).toString();
+                Log.d("DEBUG", "Destination String: " + destinations);
 
                 sendSMS(messageContents);
             }
         });
+
 
         etMessageContents.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
             }
+
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -97,14 +99,14 @@ public class ComposeActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
                 int numCharacters = etMessageContents.getText().toString().length();
                 int totalMessages = 1;
-                for(int i=2, c=160; (numCharacters/(float)c) > 1.0; i++){
+                for (int i = 2, c = 160; (numCharacters / (float) c) > 1.0; i++) {
                     c = 160 * i;
                     totalMessages = i;
                 }
-                if(totalMessages == 1)
-                    tvCharacterCount.setText(""+numCharacters+"/160");
+                if (totalMessages == 1)
+                    tvCharacterCount.setText("" + numCharacters + "/160");
                 else
-                    tvCharacterCount.setText(""+numCharacters+"/160 ("+totalMessages+")");
+                    tvCharacterCount.setText("" + numCharacters + "/160 (" + totalMessages + ")");
             }
         });
 
@@ -117,111 +119,209 @@ public class ComposeActivity extends AppCompatActivity {
             }
         });
 
+        etContactsToSend.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if (view instanceof EditText && b == false) {
+                    canListenInput = false;
+                    UnderlineSpan us;
+                    Editable buffer = ((EditText) view).getText();
+                    ((EditText) view).setText("");
+                    Vector<Long> v = bufferToVector(buffer);
+                    ssb.clearSpans();
+                    ssb.clear();
+                    contactsToSend.clear();
+
+                    if(buffer.length() == 0) {
+                        canListenInput = true;
+                        return;
+                    }
+
+
+                    else {
+
+                        for (int i = 0; i < v.size(); i++) {
+                            us = new UnderlineSpan();
+                            contactsToSend.add(v.get(i));
+                            ssb.append(v.get(i).toString(), us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            ssb.append(" ");
+                        }
+                        etContactsToSend.setText(ssb);
+                        repositionEditText();
+                        canListenInput = true;
+                    }
+                }
+            }
+        });
+
+
         etContactsToSend.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
 
                 int keyPressed = keyEvent.getKeyCode();
 
-                if (keyPressed == KeyEvent.KEYCODE_SPACE ) {
+                if (keyPressed == KeyEvent.KEYCODE_DEL && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                    canListenInput = false;
+                    Log.d("DEBUG-99", "Key Pressed DEL");
+                    if (view instanceof EditText) {
+                        Editable buffer = ((EditText) view).getText();
 
-                    CharSequence charSequence = etContactsToSend.getText().toString();
+                        if (buffer.length() == 0) {
+                            canListenInput = true;
+                            return false;
+                        }
 
-                    if (charSequence.length() == 0) {
-                        return false;
-                    }
+                        if (buffer.toString().charAt(buffer.toString().length() - 1) == ' ') {
+                            buffer.delete(buffer.length(), buffer.length());
+                            Log.d("DEBUG-99", "REMOVED SPACE: " + buffer.toString());
 
-                    if (charSequence.charAt(charSequence.length() - 1) == ' ' && canListenInput) {
-                        canListenInput = false;
+                            canListenInput = true;
+                            return false;
+                        }
+                        // If the cursor is at the end of a Span then remove the whole Span
+                        int start = Selection.getSelectionStart(buffer);
+                        int end = Selection.getSelectionEnd(buffer);
 
-                        String etContents = charSequence.toString();
-                        String currentNumber = getLastNumber(charSequence);
+                        if (start == end) {
+                            UnderlineSpan[] us = buffer.getSpans(start, end, UnderlineSpan.class);
+                            if (us.length > 0) {
+                                buffer.toString();
+                                Log.d("CREATE", "LENGTH > 0");
+                                Log.d("CREATE", "SPAN START: " + buffer.getSpanStart(us[0]));
+                                Log.d("CREATE", "SPAN STOP: " + buffer.getSpanEnd(us[0]));
+                                String contactBeingRemoved = buffer.subSequence
+                                        (buffer.getSpanStart(us[0]), buffer.getSpanEnd(us[0])).toString();
+                                try {
+                                    ssb.delete(buffer.getSpanStart(us[0]) - 1, buffer.getSpanEnd(us[0]));
+                                } catch (Exception e) {
+                                    ssb.delete(buffer.getSpanStart(us[0]), buffer.getSpanEnd(us[0]));
+                                }
+                                Log.d("DEBUG", "Contact Being Removed: " + contactBeingRemoved);
+                                buffer.replace(
+                                        buffer.getSpanStart(us[0]),
+                                        buffer.getSpanEnd(us[0]),
+                                        ""
+                                );
+                                Log.d("DEBUG", "" + buffer.toString());
+                                buffer.removeSpan(us[0]);
+                                removeElementByString(contactsToSend, contactBeingRemoved);
+                                //Log.d("DEBUG-99","Contact Vector: "+contactsToSend.elementAt(0));
+                                Log.d("DEBUG-99", "REMOVED SPAN: " + buffer.toString());
 
-
-                        Log.d("CONTACTS", "Number: " + currentNumber);
-                        Log.d("CONTACTS", "Size: " + currentNumber.length());
-
-                        contactsToSend.add(Long.parseLong(currentNumber));
-                        //Underlines text by setting a span
-                        UnderlineSpan us = new UnderlineSpan();
-
-                        ssb.append(currentNumber, us, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        ssb.append(" ");
-                        etContactsToSend.setText(ssb);
-
-                        //Places cursor at the end
-                        etContactsToSend.setSelection(etContactsToSend.length(), etContactsToSend.length());
-                        canListenInput = true;
-                        return true;
-                    }
-                }
-
-                    if (keyPressed == KeyEvent.KEYCODE_DEL && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                        canListenInput = false;
-                        Log.d("DEBUG-99", "Key Pressed DEL");
-                        if (view instanceof EditText) {
-                            Editable buffer = ((EditText) view).getText();
-
-                            if (buffer.length() == 0) {
                                 canListenInput = true;
-                                return false;
-                            }
-
-                            if (buffer.toString().charAt(buffer.toString().length() - 1) == ' ') {
+                                return true;
+                            } else {
                                 buffer.delete(buffer.length(), buffer.length());
-                                Log.d("DEBUG-99", "REMOVED SPACE: " + buffer.toString());
+                                Log.d("DEBUG-99", "REMOVED LETTER: " + buffer.toString());
 
                                 canListenInput = true;
                                 return false;
-                            }
-                            // If the cursor is at the end of a Span then remove the whole Span
-                            int start = Selection.getSelectionStart(buffer);
-                            int end = Selection.getSelectionEnd(buffer);
-
-                            if (start == end) {
-                                UnderlineSpan[] us = buffer.getSpans(start, end, UnderlineSpan.class);
-                                if (us.length > 0) {
-                                    buffer.toString();
-                                    Log.d("CREATE", "LENGTH > 0");
-                                    Log.d("CREATE", "SPAN START: " + buffer.getSpanStart(us[0]));
-                                    Log.d("CREATE", "SPAN STOP: " + buffer.getSpanEnd(us[0]));
-                                    String contactBeingRemoved = buffer.subSequence
-                                            (buffer.getSpanStart(us[0]), buffer.getSpanEnd(us[0])).toString();
-                                    try {
-                                        ssb.delete(buffer.getSpanStart(us[0]) - 1, buffer.getSpanEnd(us[0]));
-                                    }catch (Exception e){
-                                        ssb.delete(buffer.getSpanStart(us[0]), buffer.getSpanEnd(us[0]));
-                                    }
-                                    Log.d("DEBUG", "Contact Being Removed: " + contactBeingRemoved);
-                                    buffer.replace(
-                                            buffer.getSpanStart(us[0]),
-                                            buffer.getSpanEnd(us[0]),
-                                            ""
-                                    );
-                                    Log.d("DEBUG", "" + buffer.toString());
-                                    buffer.removeSpan(us[0]);
-                                    removeElementByString(contactsToSend, contactBeingRemoved);
-                                    //Log.d("DEBUG-99","Contact Vector: "+contactsToSend.elementAt(0));
-                                    Log.d("DEBUG-99", "REMOVED SPAN: " + buffer.toString());
-
-                                    canListenInput = true;
-                                    return true;
-                                }
-                                else{
-                                    buffer.delete(buffer.length(), buffer.length());
-                                    Log.d("DEBUG-99", "REMOVED LETTER: " + buffer.toString());
-
-                                    canListenInput = true;
-                                    return false;
-                                }
                             }
                         }
                     }
-                    return false;
+                }
+                return false;
 
             }
 
         });
+
+
+
+        etContactsToSend.addTextChangedListener (new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                sizeOfEditTextBefore = charSequence.length();
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                //Won't parse the spacebar if we are deleting characters
+                if(sizeOfEditTextBefore > charSequence.length()) {
+                    canListenInput = false;
+                    return;
+                }
+                else if(sizeOfEditTextBefore < i2){
+                    canListenInput = true;
+                    return;
+                }
+
+                if (charSequence.length() == 0) {
+                    return;
+                }
+
+                else{
+                    underlineNumber(charSequence.toString());
+                }
+
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+    }
+
+    public void repositionEditText(){
+        if(etContactsToSend.getText().toString().charAt(0) == ' ')
+            etContactsToSend.getText().delete(0,1);
+    }
+
+    public Vector<Long> bufferToVector (Editable buffer){
+        String s = buffer.toString();
+        String array [] = s.split(" ");
+        Vector<Long> v = new Vector<>();
+
+        for(int i=0; i<array.length; i++){
+            try{
+                v.add(Long.parseLong(array[i]));
+            }catch (Exception e){
+                return v;
+            }
+        }
+
+        return v;
+    }
+
+    public void underlineNumber(String charSequence){
+        String sequence = charSequence.toString();
+
+        if(sequence.charAt(sequence.length()-1) == ' ' && canListenInput == true){
+
+            if (canListenInput) {
+                canListenInput = false;
+
+                String etContents = charSequence.toString();
+                String currentNumber = getLastNumber(charSequence);
+
+
+                Log.d("CONTACTS", "Number: " + currentNumber);
+                Log.d("CONTACTS", "Size: " + currentNumber.length());
+                try {
+                    contactsToSend.add(Long.parseLong(currentNumber));
+                }catch (Exception e){
+                    return;
+                }
+                //Underlines text by setting a span
+                UnderlineSpan us = new UnderlineSpan();
+
+                ssb.append(currentNumber, us, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.append(" ");
+                etContactsToSend.setText(ssb);
+                repositionEditText();
+
+
+                //Places cursor at the end
+                etContactsToSend.setSelection(etContactsToSend.length(), etContactsToSend.length());
+                canListenInput = true;
+            }
+        }
     }
 
     public boolean removeElementByString(Vector<Long> contactsToSend, String s){
