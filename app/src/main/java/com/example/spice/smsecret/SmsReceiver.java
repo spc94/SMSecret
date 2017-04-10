@@ -55,12 +55,15 @@ public class SmsReceiver extends BroadcastReceiver {
                         msg += SmsMessage.createFromPdu((byte[]) pdus[i]).getDisplayMessageBody();
                     senderNumber = SmsMessage.createFromPdu((byte[])pdus[0]).getOriginatingAddress();
                 }
-                if(checkContactWhitelisted(Integer.parseInt(senderNumber))) {
+
+                senderNumber = countryDialingCodeToZeroes(senderNumber);
+                Log.d("DEBUG","Number: "+senderNumber);
+                if(checkContactWhitelisted(senderNumber)) {
                     abortBroadcast();
                     Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
                     Log.d("DEB", "Root of Files: " + context.getFilesDir().getAbsolutePath());
                     msg = encRSA(msg, context);
-                    Contacts contact = new Contacts(Integer.parseInt(senderNumber), msg, 0);
+                    Contacts contact = new Contacts(senderNumber, msg, 0);
                     Log.d("DEB2", String.valueOf(contact.getContactNumber()));
                     Log.d("DEB2", contact.getMessages());
 
@@ -97,10 +100,26 @@ public class SmsReceiver extends BroadcastReceiver {
         }
     }
 
-    public boolean checkContactWhitelisted(int senderNumber){
+    public String countryDialingCodeToZeroes(String number){
+
+        number.replaceAll(" ","");
+
+        if(number.charAt(0)=='+')
+            return "00" + number.substring(1);
+        else
+            return number;
+    }
+
+    public boolean checkContactWhitelisted(String senderNumber){
         java.util.List<String> listOfWhitelistedContacts = WhitelistedNumbersDAL.getAllWhitelistedNumbers();
+        //Removing the country code
+        String strippedNumber = senderNumber.substring(5);
+        Log.d("DEB3","Number: "+senderNumber);
+        Log.d("DEB3","Stripped: "+strippedNumber);
         for(int i=0; i<listOfWhitelistedContacts.size();i++){
-            if(listOfWhitelistedContacts.get(i).equals(""+senderNumber))
+            if(listOfWhitelistedContacts.get(i).equals(senderNumber) ||
+                    listOfWhitelistedContacts.get(i).equals(strippedNumber))
+
                 return true;
         }
         return false;
@@ -122,16 +141,16 @@ public class SmsReceiver extends BroadcastReceiver {
 
     }
 
-    public boolean checkContactExists(int senderNumber){
+    public boolean checkContactExists(String senderNumber){
         for (int i = 0; i < contactsVector.size(); i++) {
-            if(senderNumber == contactsVector.elementAt(i).getContactNumber())
+            if(senderNumber.equals(contactsVector.elementAt(i).getContactNumber()))
                 return true;
         }
         return false;
     }
 
     public void addContact(int senderNumber, String message){
-        Contacts contact = new Contacts(senderNumber,message,0);
+        Contacts contact = new Contacts(String.valueOf(senderNumber),message,0);
         contactsVector.add(contact);
     }
 

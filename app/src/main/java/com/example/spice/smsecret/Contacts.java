@@ -5,7 +5,7 @@ package com.example.spice.smsecret;
  */
 public class Contacts {
 
-    int contactNumber;
+    String contactNumber;
     int visited;
     String message;
 
@@ -13,7 +13,7 @@ public class Contacts {
 
     }
 
-    Contacts(int contactNumber, String message, int visited){
+    Contacts(String contactNumber, String message, int visited){
         setContactNumber(contactNumber);
         setMessage(message);
         setVisited(visited);
@@ -24,7 +24,7 @@ public class Contacts {
     }
 
 
-    public void setContactNumber(int contactNumber) {
+    public void setContactNumber(String contactNumber) {
         this.contactNumber = contactNumber;
     }
 
@@ -36,7 +36,7 @@ public class Contacts {
         this.visited = visited;
     }
 
-    public int getContactNumber() {
+    public String getContactNumber() {
         return contactNumber;
     }
 

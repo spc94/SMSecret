@@ -35,13 +35,13 @@ public class MessagesActivity extends Activity {
         //Obtain extra parameters
         Bundle b = getIntent().getExtras();
         //Assigned passed parameter to a var
-        int contactNumber = b.getInt("contact");
+        String contactNumber = b.getString("contact");
 
         DatabaseHandler db = new DatabaseHandler(this);
         db.changeVisitedTrue(contactNumber);
 
         try {
-            initMessages(contactNumber);
+            initMessages(String.valueOf(contactNumber));
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -55,7 +55,7 @@ public class MessagesActivity extends Activity {
         messagesLayout.removeAllViews();
     }
 
-    public void initMessages(int contactNumber) throws GeneralSecurityException, IOException, ClassNotFoundException {
+    public void initMessages(String contactNumber) throws GeneralSecurityException, IOException, ClassNotFoundException {
         //Cleans Layout
         cleanLayout();
         //Fills a Vector with all messages from specified contact
@@ -133,11 +133,11 @@ public class MessagesActivity extends Activity {
         return tvArray;
     }
 
-    public Vector<String> getMessagesFromContact(int contact){
+    public Vector<String> getMessagesFromContact(String contact){
         Vector<String> v = new Vector<>();
         List<Contacts> list =  InboxActivity.getInstance().db.getAllMessages();
         for (int i = 0; i < list.size(); i++) {
-            if(contact == list.get(i).getContactNumber())
+            if(contact.equals(list.get(i).getContactNumber()))
                 v.add(list.get(i).getMessages());
         }
         return v;

@@ -50,9 +50,9 @@ public class ComposeActivity extends AppCompatActivity {
     int sizeOfEditTextBefore = 0;
 
     boolean canListenInput = true;
-    final Vector<Long> contactsToSend = new Vector<>();
+    final Vector<String> contactsToSend = new Vector<>();
     final SpannableStringBuilder ssb = new SpannableStringBuilder();
-    Map<String, Long> namePhoneCorrespondence = new HashMap<>();
+    Map<String, String> namePhoneCorrespondence = new HashMap<>();
     EditText etContactsToSend;
 
     @Override
@@ -70,6 +70,39 @@ public class ComposeActivity extends AppCompatActivity {
         btSendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                /*if (view instanceof EditText) {
+                    canListenInput = false;
+                    UnderlineSpan us;
+                    Editable buffer = ((EditText) view).getText();
+                    ((EditText) view).setText("");
+                    Vector<Long> v = bufferToVector(buffer);
+                    ssb.clearSpans();
+                    ssb.clear();
+                    contactsToSend.clear();
+
+                    if(buffer.length() == 0) {
+                        canListenInput = true;
+                        return;
+                    }
+
+
+                    else {
+
+                        for (int i = 0; i < v.size(); i++) {
+                            us = new UnderlineSpan();
+                            contactsToSend.add(v.get(i));
+                            ssb.append(v.get(i).toString(), us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            ssb.append(" ");
+                        }
+                        etContactsToSend.setText(ssb);
+                        repositionEditText();
+                        canListenInput = true;
+                    }
+
+                    finish();
+                }*/
+
                 String messageContents = etMessageContents.getText().toString();
                 String destinations = "smsto:";
                 for (int i = 0; i < contactsToSend.size(); i++) {
@@ -127,7 +160,7 @@ public class ComposeActivity extends AppCompatActivity {
                     UnderlineSpan us;
                     Editable buffer = ((EditText) view).getText();
                     ((EditText) view).setText("");
-                    Vector<Long> v = bufferToVector(buffer);
+                    Vector<String> v = bufferToVector(buffer);
                     ssb.clearSpans();
                     ssb.clear();
                     contactsToSend.clear();
@@ -140,13 +173,23 @@ public class ComposeActivity extends AppCompatActivity {
 
                     else {
 
+                        String temp = "";
+
                         for (int i = 0; i < v.size(); i++) {
                             us = new UnderlineSpan();
-                            contactsToSend.add(v.get(i));
-                            ssb.append(v.get(i).toString(), us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            temp = namePhoneCorrespondence.get(v.get(i));
+                            if(temp != null)
+                                contactsToSend.add(temp);
+                            else
+                                contactsToSend.add(v.get(i));
+
+                            Log.d("DEB6","ContactKKK: "+v.get(i));
+                            Log.d("DEB6","ContactKKK: "+namePhoneCorrespondence.get(v.get(i)));
+                            ssb.append(v.get(i), us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                             ssb.append(" ");
                         }
                         etContactsToSend.setText(ssb);
+
                         repositionEditText();
                         canListenInput = true;
                     }
@@ -269,18 +312,24 @@ public class ComposeActivity extends AppCompatActivity {
     }
 
     public void repositionEditText(){
+
         if(etContactsToSend.getText().toString().charAt(0) == ' ')
             etContactsToSend.getText().delete(0,1);
     }
 
-    public Vector<Long> bufferToVector (Editable buffer){
+    public Vector<String> bufferToVector (Editable buffer){
+
         String s = buffer.toString();
         String array [] = s.split(" ");
-        Vector<Long> v = new Vector<>();
-
+        Vector<String> v = new Vector<>();
         for(int i=0; i<array.length; i++){
+
+            /*if(!array[i].matches(".*\\d+.*")) {
+                v.add(namePhoneCorrespondence.get(array[i]));
+                continue;
+            }*/
             try{
-                v.add(Long.parseLong(array[i]));
+                v.add(array[i]);
             }catch (Exception e){
                 return v;
             }
@@ -304,7 +353,7 @@ public class ComposeActivity extends AppCompatActivity {
                 Log.d("CONTACTS", "Number: " + currentNumber);
                 Log.d("CONTACTS", "Size: " + currentNumber.length());
                 try {
-                    contactsToSend.add(Long.parseLong(currentNumber));
+                    contactsToSend.add(currentNumber);
                 }catch (Exception e){
                     return;
                 }
@@ -324,17 +373,17 @@ public class ComposeActivity extends AppCompatActivity {
         }
     }
 
-    public boolean removeElementByString(Vector<Long> contactsToSend, String s){
+    public boolean removeElementByString(Vector<String> contactsToSend, String s){
         boolean flag = false;
         for(int i = 0; i<contactsToSend.size(); i++){
             try {
-                if (contactsToSend.elementAt(i).equals(Long.parseLong(s))) {
+                if (contactsToSend.elementAt(i).equals(s)) {
                     contactsToSend.remove(i);
                     flag = true;
                 }
             }catch (NumberFormatException e){
                 //It means it is a string and we must find what number it is supposed to be and delete it
-                long phoneNumber = namePhoneCorrespondence.get(s);
+                String phoneNumber = namePhoneCorrespondence.get(s);
 
                 for(int j = 0; j<contactsToSend.size(); j++){
                     if (contactsToSend.elementAt(i).equals(phoneNumber)) {
@@ -422,28 +471,39 @@ public class ComposeActivity extends AppCompatActivity {
                 Cursor pCur = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
                         ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{id}, null);
 
-                while (pCur.moveToNext()) {
+                if(pCur.moveToNext()){
                     phone = pCur.getString
                             (pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                     Log.v("getting phone number", "Phone Number: " + phone);
                     //Removes eventual spaces from phone numbers
                     phone = phone.replaceAll(" ","");
-                    contactsToSend.add(Long.parseLong(phone));
+                    phone = countryDialingCodeToZeroes(phone);
+                    Log.d("DEBUG","Phone without dialing code: "+phone);
+                    contactsToSend.add(phone);
 
                     //Dictionary of Contact Name to Phone Number
-                    namePhoneCorrespondence.put(contactName,Long.parseLong(phone));
+                    namePhoneCorrespondence.put(contactName.replaceAll(" ",""),phone);
 
                     //Underlines Contact Number and adds it to the EditText
                     UnderlineSpan us = new UnderlineSpan();
-                    ssb.append(contactName, us, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    ssb.append(contactName.replaceAll(" ",""), us, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     ssb.append(" ");
                     etContactsToSend.setText(ssb);
+                    Log.d("DEBUG" ,"TEXT SET");
                     etContactsToSend.setSelection(etContactsToSend.length(), etContactsToSend.length());
                 }
             }
 
         }
 
+    }
+
+    public String countryDialingCodeToZeroes(String number){
+
+        if(number.charAt(0)=='+')
+            return "00" + number.substring(1);
+        else
+            return number;
     }
 
     void sendSMS(String message)

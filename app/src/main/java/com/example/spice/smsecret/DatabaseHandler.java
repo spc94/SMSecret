@@ -38,7 +38,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_CONTACTS + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " INTEGER,"
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " TEXT,"
                 + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
@@ -75,28 +75,28 @@ public class DatabaseHandler extends SQLiteOpenHelper{
             cursor.moveToNext();
 
         }
-        Contacts contact = new Contacts(Integer.parseInt(cursor.getString(1)),
+        Contacts contact = new Contacts(cursor.getString(1),
                 cursor.getString(2), Integer.parseInt(cursor.getString(3)));
 
         return contact;
     }
 
-    public void changeVisitedTrue(int contactNumber){
+    public void changeVisitedTrue(String contactNumber){
         SQLiteDatabase db = this.getWritableDatabase();
 
         String updateQuery = "UPDATE " + TABLE_CONTACTS +
                              " SET " + KEY_VISITED + "='1' WHERE " + KEY_NUMBER + "=?";
 
-        db.execSQL(updateQuery,new String[] {String.valueOf(contactNumber)});
+        db.execSQL(updateQuery,new String[] {contactNumber});
 
     }
 
-    public boolean checkVisited(int contactNumber){
+    public boolean checkVisited(String contactNumber){
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selectQuery = "SELECT * FROM " + TABLE_CONTACTS + " WHERE " + KEY_NUMBER + "=?";
 
-        Cursor cursor = db.rawQuery(selectQuery,new String[] {String.valueOf(contactNumber)});
+        Cursor cursor = db.rawQuery(selectQuery,new String[] {contactNumber});
 
         boolean flag = true;
 
@@ -124,7 +124,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         if (cursor.moveToFirst()) {
             do {
                 Contacts contact = new Contacts();
-                contact.setContactNumber(Integer.parseInt(cursor.getString(1)));
+                contact.setContactNumber(cursor.getString(1));
                 contact.setMessage(cursor.getString(2));
                 contact.setVisited(Integer.parseInt(cursor.getString(3)));
                 // Adding contact to list

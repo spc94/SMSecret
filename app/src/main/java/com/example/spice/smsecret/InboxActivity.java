@@ -19,7 +19,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     public static InboxActivity ins;
     public LinearLayout contactsLayout;
     public TextView[] textView;
-    public ArrayList<Integer> contactsInView = new ArrayList<>();
+    public ArrayList<String> contactsInView = new ArrayList<>();
     public int dbSize;
 
     public TextView tvWelcome;
@@ -54,7 +54,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         Log.d("CLICK","Clicked a contact number! ");
         TextView clickedView = (TextView)arg0;
         Log.d("DEBUG","id: "+ clickedView.getId());
-        int id = contactsInView.get(clickedView.getId());
+        String id = String.valueOf(contactsInView.get(clickedView.getId()));
         Log.d("DEB","ID: "+id);
         Intent intent = new Intent(this, MessagesActivity.class);
         intent.putExtra("contact",id);
@@ -75,6 +75,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public TextView[] populateTextViewArray(){
+        Log.d("DEB3","Entering populate");
         int size = db.getMessagesCount();
         dbSize = size;
         Log.d("DEB","Size of DB "+size);
@@ -84,7 +85,8 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=size,j = 0; i>=1;i-- )  {
-            int contactNumber = db.getMessage(i).getContactNumber();
+            String contactNumber = db.getMessage(i).getContactNumber();
+            Log.d("DEB4",contactNumber);
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);
                 String contactInPhonebook = checkWhitelistedContactExistsOnPhonebook(contactNumber);
@@ -124,10 +126,12 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    public String checkWhitelistedContactExistsOnPhonebook(int number) {
+    public String checkWhitelistedContactExistsOnPhonebook(String number) {
         ArrayList<String[]> contactsInPhonebook = getAllContactsFromPhonebook();
+        String strippedNumber = number.substring(5);
         for (int i = 0; i < contactsInPhonebook.size(); i++) {
-            if (number == Integer.parseInt(contactsInPhonebook.get(i)[1]))
+            if (number.equals(contactsInPhonebook.get(i)[1]) ||
+                    strippedNumber.equals(contactsInPhonebook.get(i)[1]))
                 return contactsInPhonebook.get(i)[0];
         }
         return null;
@@ -157,10 +161,10 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         return contacts;
     }
 
-    public boolean checkContactExists(int contactNumber){
+    public boolean checkContactExists(String contactNumber){
 
         for(int i=0; i<contactsInView.size();i++) {
-            if (contactNumber == contactsInView.get(i))
+            if (contactNumber.equals(contactsInView.get(i)))
                 return true;
         }
 
@@ -185,7 +189,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-    public boolean checkVisited(int contactNumber){
+    public boolean checkVisited(String contactNumber){
         boolean checkVisited = db.checkVisited(contactNumber);
         Log.d("DEBUG","VISITED BEFORE: "+checkVisited);
         return checkVisited;
