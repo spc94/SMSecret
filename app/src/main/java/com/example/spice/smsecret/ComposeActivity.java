@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.net.Uri;
 import android.provider.ContactsContract;
@@ -38,7 +40,13 @@ import android.widget.Toast;
 
 import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
 import com.example.spice.smsecret.UselessClasses.SimpleSpanBuilder;
+import com.klinker.android.send_message.Message;
+import com.klinker.android.send_message.Settings;
+import com.klinker.android.send_message.Transaction;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.HashMap;
@@ -48,10 +56,12 @@ import java.util.Vector;
 public class ComposeActivity extends AppCompatActivity {
 
     int sizeOfEditTextBefore = 0;
-
+    private static final int SELECT_PHOTO = 100;
     boolean canListenInput = true;
     final Vector<String> contactsToSend = new Vector<>();
     final SpannableStringBuilder ssb = new SpannableStringBuilder();
+    private Bitmap attachmentBitmap;
+    boolean hasAttachment = false;
     Map<String, String> namePhoneCorrespondence = new HashMap<>();
     EditText etContactsToSend;
 
@@ -64,8 +74,21 @@ public class ComposeActivity extends AppCompatActivity {
         final ImageButton btAddContact = (ImageButton) findViewById(R.id.btAddContact);
         final ImageButton btSendMessage = (ImageButton) findViewById(R.id.btSendMessage);
         final EditText etMessageContents = (EditText) findViewById(R.id.etMessageContents);
+        final ImageButton btAttachment = (ImageButton) findViewById(R.id.btAttachment);
+
+
+
         etContactsToSend = (EditText) findViewById(R.id.etContactToSend);
 
+
+        btAttachment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                photoPickerIntent.setType("image/*");
+                startActivityForResult(photoPickerIntent, SELECT_PHOTO);
+            }
+        });
 
         btSendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -446,9 +469,36 @@ public class ComposeActivity extends AppCompatActivity {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
+
+        if(requestCode == SELECT_PHOTO){
+            if(resultCode == RESULT_OK){
+                Uri selectedImage = data.getData();
+
+                InputStream imageStream = null;
+                try {
+                    imageStream = getContentResolver().openInputStream(selectedImage);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this,"Image not found!",Toast.LENGTH_SHORT);
+                }
+                Bitmap yourSelectedImage = BitmapFactory.decodeStream(imageStream);
+
+                if(yourSelectedImage.getByteCount()<307200) {
+                    attachmentBitmap = yourSelectedImage;
+                    hasAttachment = true;
+                }
+                else{
+                    Toast.makeText(this,"The image is too large!",Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        }
+
+        else if (resultCode == RESULT_OK) {
             getContactData(data);
         }
+
+
     }
 
     public void getContactData(Intent data) {
@@ -495,6 +545,36 @@ public class ComposeActivity extends AppCompatActivity {
             }
 
         }
+
+    }
+
+    private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
+
+        // Decode image size
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o);
+
+        // The new size we want to scale to
+        final int REQUIRED_SIZE = 150;
+
+        // Find the correct scale value. It should be the power of 2.
+        int width_tmp = o.outWidth, height_tmp = o.outHeight;
+        int scale = 1;
+        while (true) {
+            if (width_tmp / 2 < REQUIRED_SIZE
+                    || height_tmp / 2 < REQUIRED_SIZE) {
+                break;
+            }
+            width_tmp /= 2;
+            height_tmp /= 2;
+            scale *= 2;
+        }
+
+        // Decode with inSampleSize
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o2);
 
     }
 
@@ -566,10 +646,23 @@ public class ComposeActivity extends AppCompatActivity {
         }, new IntentFilter(DELIVERED));
 
         SmsManager sms = SmsManager.getDefault();
-        for(int i=0; i < contactsToSend.size(); i++)
-            sms.sendTextMessage(contactsToSend.elementAt(i).toString(), null, message, sentPI, deliveredPI);
-
-
+        if(hasAttachment == false) {
+            for (int i = 0; i < contactsToSend.size(); i++)
+                sms.sendTextMessage(contactsToSend.elementAt(i).toString(), null, message, sentPI, deliveredPI);
+        }
+        else{
+            Settings settings = new Settings();
+            settings.setUseSystemSending(true);
+            Transaction transaction = new Transaction(this, settings);
+            Message multimediaMessage;
+            Log.d("DEBUGIMAGE","IT ENTERS THE FUCKING ELSE");
+            for(int i = 0; i < contactsToSend.size(); i++){
+                multimediaMessage = new Message(message, contactsToSend.elementAt(i));
+                multimediaMessage.setImage(attachmentBitmap);
+                transaction.sendNewMessage(multimediaMessage, Transaction.NO_THREAD_ID);
+            }
+            Toast.makeText(this,"MMS successfully sent!", Toast.LENGTH_SHORT).show();
+        }
 
     }
 

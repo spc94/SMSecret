@@ -51,8 +51,7 @@
         android:layout_height="wrap_content">
 
 
-
-                <EditText
+        <EditText
                     android:hint="Send message"
                     android:layout_width="match_parent"
                     android:textSize="18dp"
@@ -62,14 +61,35 @@
                     android:id="@+id/etMessageContents"
                     android:layout_weight="0.9" />
 
-                <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@android:drawable/ic_menu_send"
-                    android:id="@+id/btSendMessage"
-                    android:background="@null"
-                    android:layout_alignBottom="@+id/etContactToSend" />
+        <ImageButton
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            app:srcCompat="@android:drawable/ic_menu_send"
+            android:id="@+id/btSendMessage"
+            android:background="@null"
+            android:layout_alignBottom="@+id/etContactToSend" />
 
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:layout_height="34dp"
+                app:srcCompat="@mipmap/attachment"
+                android:id="@+id/btAttachment"
+                android:layout_width="34dp"
+                android:layout_gravity="right"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true" />
+        </RelativeLayout>
 
     </LinearLayout>
 
@@ -78,7 +98,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/tvCharacterCount"
-        android:layout_weight="0.29"
         android:gravity="right"/>
 
 </LinearLayout>

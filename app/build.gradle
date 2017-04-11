@@ -28,4 +28,5 @@ dependencies {
     compile 'com.android.support:support-vector-drawable:23.4.0'
     testCompile 'junit:junit:4.12'
     compile 'com.github.satyan:sugar:1.5'
+    compile 'com.klinkerapps:android-smsmms:3.5.0'
 }
