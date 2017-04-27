@@ -1,8 +1,10 @@
 package com.example.spice.smsecret;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,12 +13,16 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-public class InboxActivity extends AppCompatActivity implements View.OnClickListener{
+public class UnencryptedInbox extends AppCompatActivity implements View.OnClickListener{
     DatabaseHandler db = new DatabaseHandler(this);
     public int sizeOfTextViewArray;
-    public static InboxActivity ins;
+    public static UnencryptedInbox ins;
     public LinearLayout contactsLayout;
     public TextView[] textView;
     public ArrayList<String> contactsInView = new ArrayList<>();
@@ -24,7 +30,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
     public TextView tvWelcome;
 
-    public static InboxActivity getInstance(){
+    public static UnencryptedInbox getInstance(){
         return ins;
     }
 
@@ -56,7 +62,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         Log.d("DEBUG","id: "+ clickedView.getId());
         String id = String.valueOf(contactsInView.get(clickedView.getId()));
         Log.d("DEB","ID: "+id);
-        Intent intent = new Intent(this, MessagesActivity.class);
+        Intent intent = new Intent(this, UnencryptedMessages.class);
         intent.putExtra("contact",id);
         startActivity(intent);
     }
@@ -72,11 +78,89 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
         textView = populateTextViewArray();
         addContactsToLayout(contactsLayout, textView, sizeOfTextViewArray);
         initTextViewListeners();
+
+
+        //Figuring if SMS or MMS
+
+        ContentResolver contentResolver = getContentResolver();
+        int mmsId = 0;
+        final String[] projection = new String[]{"_id", "ct_t"};
+        Uri uriOne = Uri.parse("content://mms-sms/conversations/");
+        Cursor query = contentResolver.query(uriOne, projection, null, null, null);
+        if (query.moveToFirst()) {
+            do {
+                String string = query.getString(query.getColumnIndex("ct_t"));
+                if ("application/vnd.wap.multipart.related".equals(string)) {
+                    mmsId = Integer.parseInt(query.getString(query.getColumnIndex("_id")));
+                    Log.d("DEBUG-MMS", "***MMS found!*** ID="+mmsId);
+                } else {
+                    mmsId = Integer.parseInt(query.getString(query.getColumnIndex("_id")));
+                    Log.d("DEBUG-MMS", "SMS Found! ID="+mmsId);
+                    // it's SMS
+                }
+            } while (query.moveToNext());
+        }
+
+
+        // RANDOM TEST FOR MMS
+        String selectionPart = "mid=" + mmsId;
+        Uri uri = Uri.parse("content://mms/part");
+        Cursor cursor = getContentResolver().query(uri, null,
+                selectionPart, null, null);
+        Log.d("DEBUG-MMS","Attempting to Move");
+        if (cursor.moveToFirst()) {
+            Log.d("DEBUG-MMS","Inside TABLE!!!!");
+            do {
+                String partId = cursor.getString(cursor.getColumnIndex("_id"));
+                String type = cursor.getString(cursor.getColumnIndex("ct"));
+                if ("text/plain".equals(type)) {
+                    String data = cursor.getString(cursor.getColumnIndex("_data"));
+                    String body;
+                    if (data != null) {
+                        // implementation of this method below
+                        body = getMmsText(partId);
+                        Log.d("DEBUG-MMS","BODY1: "+ body);
+                    } else {
+                        body = cursor.getString(cursor.getColumnIndex("text"));
+                        Log.d("DEBUG-MMS","BODY2: "+ body);
+                    }
+                }
+            } while (cursor.moveToNext());
+        }
+    }
+
+    //RANDOM TEST FOR MMS
+
+    private String getMmsText(String id) {
+        Uri partURI = Uri.parse("content://mms/part/" + id);
+        InputStream is = null;
+        StringBuilder sb = new StringBuilder();
+        try {
+            is = getContentResolver().openInputStream(partURI);
+            if (is != null) {
+                InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+                BufferedReader reader = new BufferedReader(isr);
+                String temp = reader.readLine();
+                Log.d("DEBUG-MMS","Current temp: "+temp);
+                while (temp != null) {
+                    sb.append(temp);
+                    temp = reader.readLine();
+                }
+            }
+        } catch (IOException e) {}
+        finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {}
+            }
+        }
+        return sb.toString();
     }
 
     public TextView[] populateTextViewArray(){
         Log.d("DEB3","Entering populate");
-        int size = db.getMessagesCount();
+        int size = db.getMessagesCountUnencrypted();
         dbSize = size;
         Log.d("DEB","Size of DB "+size);
         //Note - The number of textviews should depend on amount of different contacts and not messages
@@ -85,7 +169,7 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
 
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=size,j = 0; i>=1;i-- )  {
-            String contactNumber = db.getMessage(i).getContactNumber();
+            String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
             Log.d("DEB4",contactNumber);
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);
@@ -144,8 +228,8 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
                 .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                         new String[]
                                 {
-                                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                                ContactsContract.CommonDataKinds.Phone.NUMBER
+                                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                                        ContactsContract.CommonDataKinds.Phone.NUMBER
                                 }, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
 
         Log.d("DEBUG CONTACTS", "SIZE OF PHONEBOOK: "+managedCursor.getColumnCount());
@@ -178,19 +262,19 @@ public class InboxActivity extends AppCompatActivity implements View.OnClickList
             return;
 
         for (int i = 0; i < size; i++) {
-                Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
-                tv[i].setTextSize(25);
-                if(!checkVisited(contactsInView.get(i)))
-                    tv[i].setBackgroundColor(Color.rgb(0,160,0));
-                else
-                    tv[i].setBackgroundColor(Color.GREEN);
-                contactsLayout.addView(tv[i]);
+            Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
+            tv[i].setTextSize(25);
+            if(!checkVisited(contactsInView.get(i)))
+                tv[i].setBackgroundColor(Color.rgb(0,160,0));
+            else
+                tv[i].setBackgroundColor(Color.GREEN);
+            contactsLayout.addView(tv[i]);
         }
     }
 
 
     public boolean checkVisited(String contactNumber){
-        boolean checkVisited = db.checkVisited(contactNumber);
+        boolean checkVisited = db.checkVisitedUnencrypted(contactNumber);
         Log.d("DEBUG","VISITED BEFORE: "+checkVisited);
         return checkVisited;
     }

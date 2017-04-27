@@ -43,13 +43,15 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MessagesActivity" />
+        <activity android:name=".EncryptedMessages" />
         <activity android:name=".SetPasswordActivity" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".MainMenuActivity" />
-        <activity android:name=".InboxActivity" />
+        <activity android:name=".EncryptedInbox" />
+        <activity android:name=".UnencryptedInbox"/>
+        <activity android:name=".UnencryptedMessages"/>
 
-        <receiver android:name=".UselessClasses.MmsReceiver"
+        <receiver android:name=".MmsReceiver"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />

@@ -45,6 +45,7 @@ public class SmsReceiver extends BroadcastReceiver {
 
                 if (Build.VERSION.SDK_INT >= 19) { //KITKAT
 
+
                     SmsMessage[] msgs = Telephony.Sms.Intents.getMessagesFromIntent(intent);
                     for(int i=0;i<msgs.length;i++)
                         msg += msgs[i].getDisplayMessageBody();
@@ -59,6 +60,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 senderNumber = countryDialingCodeToZeroes(senderNumber);
                 Log.d("DEBUG","Number: "+senderNumber);
                 if(checkContactWhitelisted(senderNumber)) {
+                    Log.d("DEBUG","ENTERS IF");
                     abortBroadcast();
                     Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
                     Log.d("DEB", "Root of Files: " + context.getFilesDir().getAbsolutePath());
@@ -72,25 +74,39 @@ public class SmsReceiver extends BroadcastReceiver {
 
 
                     //Reads database into textView array
-                    InboxActivity.getInstance().textView = InboxActivity.getInstance().populateTextViewArray();
+                    EncryptedInbox.getInstance().textView = EncryptedInbox.getInstance().populateTextViewArray();
                     //Clears all the textViews
-                    InboxActivity.getInstance().cleanLayout();
-                    InboxActivity.getInstance().tvWelcome.setVisibility(View.INVISIBLE);
+                    EncryptedInbox.getInstance().cleanLayout();
+                    EncryptedInbox.getInstance().tvWelcome.setVisibility(View.INVISIBLE);
                     //Writes everything from the textView array to the layout
-                    InboxActivity.getInstance().addContactsToLayout(InboxActivity.getInstance().contactsLayout,
-                            InboxActivity.getInstance().textView, InboxActivity.getInstance().sizeOfTextViewArray);
-                    InboxActivity.getInstance().initTextViewListeners();
-                    MessagesActivity.getInstance().initMessages(contact.getContactNumber());
+                    EncryptedInbox.getInstance().addContactsToLayout(EncryptedInbox.getInstance().contactsLayout,
+                            EncryptedInbox.getInstance().textView, EncryptedInbox.getInstance().sizeOfTextViewArray);
+                    EncryptedInbox.getInstance().initTextViewListeners();
+                    EncryptedMessages.getInstance().initMessages(contact.getContactNumber());
                 }
                 else{
-                    //Intent newIntent = new Intent();
-                    Intent redirectIntent = intent;
-                    redirectIntent.setClassName("com.android.mms.transaction","com.android.mms.transaction.SmsReceiver");
-                    redirectIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    Log.d("DEBUG","Enters else");
-                    context.startActivity(redirectIntent);
-                    //context.startActivity(redirectIntent);
-                    //context.sendOrderedBroadcast(redirectIntent,null);
+                    Log.d("DEBUG","ENTERS ELSE");
+                    abortBroadcast();
+                    Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
+                    Log.d("DEB", "Root of Files: " + context.getFilesDir().getAbsolutePath());
+                    Contacts contact = new Contacts(senderNumber, msg, 0);
+                    Log.d("DEB2", String.valueOf(contact.getContactNumber()));
+                    Log.d("DEB2", contact.getMessages());
+
+                    db.addMessageUnencrypted(contact);
+                    db.close();
+
+                    //Reads database into textView array
+                    UnencryptedInbox.getInstance().textView = UnencryptedInbox.getInstance().populateTextViewArray();
+                    //Clears all the textViews
+                    UnencryptedInbox.getInstance().cleanLayout();
+                    UnencryptedInbox.getInstance().tvWelcome.setVisibility(View.INVISIBLE);
+                    //Writes everything from the textView array to the layout
+                    UnencryptedInbox.getInstance().addContactsToLayout(UnencryptedInbox.getInstance().contactsLayout,
+                            UnencryptedInbox.getInstance().textView, UnencryptedInbox.getInstance().sizeOfTextViewArray);
+                    UnencryptedInbox.getInstance().initTextViewListeners();
+                    EncryptedMessages.getInstance().initMessages(contact.getContactNumber());
+
                 }
 
             }

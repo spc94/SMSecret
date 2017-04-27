@@ -35,6 +35,7 @@ public class LoginActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("DEBUG--","Inside Login");
         super.onCreate(savedInstanceState);
         ins = this;
         setContentView(R.layout.activity_login);
@@ -56,10 +57,15 @@ public class LoginActivity extends Activity {
                                 Toast.makeText(getApplicationContext(), "Welcome back :)",Toast.LENGTH_SHORT).show();
                             }
                         });
+
+                        //MainActivity.getInstance().password = passwordEditText.getText().toString();
+
+
                         Intent returnIntent = new Intent();
                         returnIntent.putExtra("result",passwordEditText.getText().toString());
                         setResult(Activity.RESULT_OK,returnIntent);
                         finish();
+
                     }
                     else{
                         //passwordEditText.setText("");
@@ -88,10 +94,10 @@ public class LoginActivity extends Activity {
         });
     }
 
-    @Override
+    /*@Override
     public void onBackPressed() {
         moveTaskToBack(true);
-    }
+    }*/
 
     public byte[] generateFileToDecrypt() throws IOException, ClassNotFoundException {
         File publicKeyFile = new File(getInstance().getFilesDir(),"public.key");

@@ -38,6 +38,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.ex.chips.RecipientEditTextView;
 import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
 import com.example.spice.smsecret.UselessClasses.SimpleSpanBuilder;
 import com.klinker.android.send_message.Message;
@@ -64,6 +65,7 @@ public class ComposeActivity extends AppCompatActivity {
     boolean hasAttachment = false;
     Map<String, String> namePhoneCorrespondence = new HashMap<>();
     EditText etContactsToSend;
+    RecipientEditTextView retContactsToSend;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +81,9 @@ public class ComposeActivity extends AppCompatActivity {
 
 
         etContactsToSend = (EditText) findViewById(R.id.etContactToSend);
+        //retContactsToSend = (RecipientEditTextView) findViewById(R.id.retContacts);
+
+
 
 
         btAttachment.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +137,7 @@ public class ComposeActivity extends AppCompatActivity {
                     destinations = destinations + contactsToSend.elementAt(i).toString() + ";";
                 }
                 destinations = destinations.subSequence(0, destinations.length() - 1).toString();
+                destinations = destinations.replaceAll(":;",":");
                 Log.d("DEBUG", "Destination String: " + destinations);
 
                 sendSMS(messageContents);

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#24272C">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
+        <View android:id="@+id/rectangle_inbox"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#4286f4"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="Inbox"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvInbox"
+            android:layout_weight="0.71"
+            android:textColor="#FFFFFF"/>
+
+        <ImageView
+            android:src="@drawable/circle_blue"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginTop="21dp"/>
+
+        <TextView
+            android:text="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:id="@+id/tvInboxUnreadMessages"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="9.5dp"
+            android:textColor="#FFFFFF"
+            android:layout_weight="1" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
+        <View android:id="@+id/rectangle_safeBox"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#63cdff"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="SafeBox"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:layout_marginTop="14dp"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvSafeBox"
+            android:layout_weight="0.71" />
+
+        <ImageView
+            android:src="@drawable/circle_light_blue"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginTop="21dp"/>
+
+        <TextView
+            android:text="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:id="@+id/tvSafeBoxUnreadMessages"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="9.5dp"
+            android:layout_weight="1" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
+        <View android:id="@+id/rectangle_compose"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#46d659"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="Compose"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="14dp"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvCompose"
+            android:layout_weight="0.71" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
+        <View android:id="@+id/rectangle_junk"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#ff6370"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="Junk"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="14dp"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvJunk"
+            android:layout_weight="0.71" />
+
+        <ImageView
+            android:src="@drawable/circle_light_red"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginTop="21dp"/>
+
+        <TextView
+            android:text="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:textColor="#FFFFFF"
+            android:id="@+id/tvJunkUnreadMessages"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="9.5dp"
+            android:layout_weight="1" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
+        <View android:id="@+id/rectangle_settings"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#fff263"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="Settings"
+            android:textColor="#FFFFFF"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvSettings"
+            android:layout_weight="0.71" />
+
+
+    </LinearLayout>
+
+
+
+
+</LinearLayout>

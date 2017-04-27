@@ -42,7 +42,9 @@ public class MainActivity extends FragmentActivity{
         //If opening app for the first time, it won't request login
         else if(true) {
             Log.d("DEBUG","Enter Login Activity");
-            Intent intent = new Intent(this, LoginActivity.class);
+            //Intent intent = new Intent(this, LoginActivity.class);
+            //startActivityForResult(intent,10);
+            Intent intent = new Intent(this, MainMenuActivity.class);
             startActivityForResult(intent,10);
         }
 

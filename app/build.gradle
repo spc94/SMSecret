@@ -29,4 +29,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.github.satyan:sugar:1.5'
     compile 'com.klinkerapps:android-smsmms:3.5.0'
+    compile 'com.klinkerapps:android-chips:1.1.1@aar'
 }

@@ -52,4 +52,6 @@
         android:layout_alignBottom="@+id/buttonSettings"
         android:layout_alignLeft="@+id/buttonCompose"
         android:layout_alignStart="@+id/buttonCompose" />
+
+
 </RelativeLayout>

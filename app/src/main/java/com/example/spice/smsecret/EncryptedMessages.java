@@ -2,9 +2,7 @@ package com.example.spice.smsecret;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.util.Base64;
-import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -24,9 +22,9 @@ import java.util.Vector;
  */
 
 
-public class MessagesActivity extends Activity {
+public class EncryptedMessages extends Activity {
     public LinearLayout messagesLayout;
-    private static MessagesActivity ins;
+    private static EncryptedMessages ins;
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         ins = this;
@@ -135,7 +133,7 @@ public class MessagesActivity extends Activity {
 
     public Vector<String> getMessagesFromContact(String contact){
         Vector<String> v = new Vector<>();
-        List<Contacts> list =  InboxActivity.getInstance().db.getAllMessages();
+        List<Contacts> list =  EncryptedInbox.getInstance().db.getAllMessages();
         for (int i = 0; i < list.size(); i++) {
             if(contact.equals(list.get(i).getContactNumber()))
                 v.add(list.get(i).getMessages());
@@ -145,7 +143,7 @@ public class MessagesActivity extends Activity {
 
 
 
-    public static MessagesActivity getInstance(){
+    public static EncryptedMessages getInstance(){
         return ins;
     }
 }

@@ -23,7 +23,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
     // Contacts table name
     private static final String TABLE_CONTACTS = "messages";
-
+    private static final String TABLE_CONTACTS_UNECNRYPTED = "messages_unencrypted";
     // Contacts Table Columns names
     private static final String KEY_ID = "msgId";
     private static final String KEY_NUMBER = "phoneNumber";
@@ -40,7 +40,12 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_CONTACTS + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " TEXT,"
                 + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
+
+        String CREATE_CONTACTS_TABLE_UNENCRYPTED = "CREATE TABLE " + TABLE_CONTACTS_UNECNRYPTED + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " TEXT,"
+                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
+        db.execSQL(CREATE_CONTACTS_TABLE_UNENCRYPTED);
     }
 
     // Upgrading database
@@ -48,7 +53,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACTS);
-
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACTS_UNECNRYPTED);
         // Create tables again
         onCreate(db);
     }
@@ -62,6 +67,18 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         // Inserting Row
         db.insert(TABLE_CONTACTS, null, values);
+        db.close(); // Closing database connection
+    }
+
+    public void addMessageUnencrypted(Contacts contact) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_NUMBER, contact.getContactNumber()); // Contact Name
+        values.put(KEY_MSG, contact.getMessages()); // Contact Phone Number
+        values.put(KEY_VISITED,0);
+
+        // Inserting Row
+        db.insert(TABLE_CONTACTS_UNECNRYPTED, null, values);
         db.close(); // Closing database connection
     }
 
@@ -81,11 +98,37 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return contact;
     }
 
+    public Contacts getMessageUnencrypted(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_CONTACTS_UNECNRYPTED, new String[] {KEY_ID,
+                        KEY_NUMBER, KEY_MSG, KEY_VISITED}, KEY_ID + "=?",
+                new String[] { String.valueOf(id) }, null, null, null, null);
+        if (cursor != null) {
+            cursor.moveToNext();
+
+        }
+        Contacts contact = new Contacts(cursor.getString(1),
+                cursor.getString(2), Integer.parseInt(cursor.getString(3)));
+
+        return contact;
+    }
+
     public void changeVisitedTrue(String contactNumber){
         SQLiteDatabase db = this.getWritableDatabase();
 
         String updateQuery = "UPDATE " + TABLE_CONTACTS +
                              " SET " + KEY_VISITED + "='1' WHERE " + KEY_NUMBER + "=?";
+
+        db.execSQL(updateQuery,new String[] {contactNumber});
+
+    }
+
+    public void changeVisitedTrueUnencrypted(String contactNumber){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String updateQuery = "UPDATE " + TABLE_CONTACTS_UNECNRYPTED +
+                " SET " + KEY_VISITED + "='1' WHERE " + KEY_NUMBER + "=?";
 
         db.execSQL(updateQuery,new String[] {contactNumber});
 
@@ -111,11 +154,95 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return flag;
     }
 
+    public boolean checkVisitedUnencrypted(String contactNumber){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACTS_UNECNRYPTED + " WHERE " + KEY_NUMBER + "=?";
+
+        Cursor cursor = db.rawQuery(selectQuery,new String[] {contactNumber});
+
+        boolean flag = true;
+
+        if(cursor.moveToFirst()){
+            do{
+                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
+                if(cursor.getString(3).equals("0"))
+                    flag = false;
+            }while(cursor.moveToNext());
+        }
+
+        return flag;
+    }
+
+    public int getNumberOfUnvisited(String contactNumber){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACTS;
+
+        Cursor cursor = db.rawQuery(selectQuery,null);
+
+        int totalUnread = 0;
+
+        if(cursor.moveToFirst()){
+            do{
+                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
+                if(cursor.getString(3).equals("0"))
+                    totalUnread += 1;
+            }while(cursor.moveToNext());
+        }
+
+        return totalUnread;
+    }
+
+    public int getNumberOfUnvisitedUnencrypted(String contactNumber){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACTS_UNECNRYPTED;
+
+        Cursor cursor = db.rawQuery(selectQuery,null);
+
+        int totalUnread = 0;
+
+        if(cursor.moveToFirst()){
+            do{
+                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
+                if(cursor.getString(3).equals("0"))
+                    totalUnread += 1;
+            }while(cursor.moveToNext());
+        }
+
+        return totalUnread;
+    }
+
 
     public List<Contacts> getAllMessages() {
         List<Contacts> contactList = new ArrayList<Contacts>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_CONTACTS;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                Contacts contact = new Contacts();
+                contact.setContactNumber(cursor.getString(1));
+                contact.setMessage(cursor.getString(2));
+                contact.setVisited(Integer.parseInt(cursor.getString(3)));
+                // Adding contact to list
+                contactList.add(contact);
+            } while (cursor.moveToNext());
+        }
+
+        // return contact list
+        return contactList;
+    }
+
+    public List<Contacts> getAllMessagesUnencrypted() {
+        List<Contacts> contactList = new ArrayList<Contacts>();
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_CONTACTS_UNECNRYPTED;
 
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -147,9 +274,27 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return cursorCount;
     }
 
+    public int getMessagesCountUnencrypted() {
+        String countQuery = "SELECT  * FROM " + TABLE_CONTACTS_UNECNRYPTED;
+        Log.d("DEB","Inside Message Count");
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        int cursorCount = cursor.getCount();
+        cursor.close();
+        Log.d("DEB", "Cursor value: "+cursor.getCount());
+        return cursorCount;
+    }
+
     public void deleteMessage(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_CONTACTS, KEY_ID + " = ?",
+                new String[] { String.valueOf(id) });
+        db.close();
+    }
+
+    public void deleteMessageUnencrypted(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_CONTACTS_UNECNRYPTED, KEY_ID + " = ?",
                 new String[] { String.valueOf(id) });
         db.close();
     }

@@ -2,13 +2,15 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_login"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#24272C">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Welcome Back"
+        android:textColor="#FFFFFF"
         android:id="@+id/loginHeader"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
@@ -17,6 +19,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="To decrypt your messages, please introduce your password"
         android:id="@+id/loginDescriptionHeader"
@@ -30,6 +33,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#FFFFFF"
         android:ems="10"
         android:id="@+id/loginPassword"
         android:layout_below="@+id/loginDescriptionHeader"
