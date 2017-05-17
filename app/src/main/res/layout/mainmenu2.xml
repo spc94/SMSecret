@@ -168,6 +168,33 @@
         android:layout_height="75dp"
         android:weightSum="1">
 
+        <View android:id="@+id/rectangle_webapp"
+            android:layout_width="15dp"
+            android:layout_height="75dp"
+            android:layout_alignParentTop="true"
+            android:background="#FF6347"
+            android:visibility="visible"/>
+
+        <TextView
+            android:text="WebApp"
+            android:textColor="#FFFFFF"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:textSize="35dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginLeft="14dp"
+            android:id="@+id/tvWebapp"
+            android:layout_weight="0.71" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:weightSum="1">
+
         <View android:id="@+id/rectangle_settings"
             android:layout_width="15dp"
             android:layout_height="75dp"
@@ -188,6 +215,8 @@
 
 
     </LinearLayout>
+
+
 
 
 
