@@ -54,7 +54,7 @@ public class LoginActivity extends Activity {
                         MainActivity.getInstance().loginComplete=true;
                         runOnUiThread(new Runnable(){
                             public void run() {
-                                Toast.makeText(getApplicationContext(), "Welcome back :)",Toast.LENGTH_SHORT).show();
+                                //Toast.makeText(getApplicationContext(), "Welcome back :)",Toast.LENGTH_SHORT).show();
                             }
                         });
 

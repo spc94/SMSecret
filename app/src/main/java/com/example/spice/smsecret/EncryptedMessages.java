@@ -1,6 +1,7 @@
 package com.example.spice.smsecret;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Base64;
 import android.widget.LinearLayout;
@@ -114,7 +115,8 @@ public class EncryptedMessages extends Activity {
         for (int i = tvArray.length-1; i >= 0; i--) {
             String temp = tvArray[i].getText().toString();
             tvArray[i].setTextSize(24);
-            tvArray[i].setText(temp + "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+            tvArray[i].setTextColor(Color.WHITE);
+            tvArray[i].setText(temp + "\n______________________________");
             messagesLayout.addView(tvArray[i]);
         }
     }
@@ -134,6 +136,7 @@ public class EncryptedMessages extends Activity {
     public Vector<String> getMessagesFromContact(String contact){
         Vector<String> v = new Vector<>();
         List<Contacts> list =  EncryptedInbox.getInstance().db.getAllMessages();
+
         for (int i = 0; i < list.size(); i++) {
             if(contact.equals(list.get(i).getContactNumber()))
                 v.add(list.get(i).getMessages());

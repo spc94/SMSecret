@@ -174,7 +174,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return flag;
     }
 
-    public int getNumberOfUnvisited(String contactNumber){
+    public int getNumberOfUnvisited(){
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selectQuery = "SELECT * FROM " + TABLE_CONTACTS;
@@ -194,7 +194,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return totalUnread;
     }
 
-    public int getNumberOfUnvisitedUnencrypted(String contactNumber){
+    public int getNumberOfUnvisitedUnencrypted(){
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selectQuery = "SELECT * FROM " + TABLE_CONTACTS_UNECNRYPTED;
@@ -284,6 +284,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         Log.d("DEB", "Cursor value: "+cursor.getCount());
         return cursorCount;
     }
+
 
     public void deleteMessage(int id) {
         SQLiteDatabase db = this.getWritableDatabase();

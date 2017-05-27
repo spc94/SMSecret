@@ -4,16 +4,22 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -27,12 +33,25 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.framed.FrameReader;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.Vector;
 
 /**
  * Created by spice on 10/08/16.
@@ -52,6 +71,14 @@ public class MainMenuActivity extends Activity{
         return ins;
     }
 
+    Vector<String> allSafeboxMessages;
+    DatabaseHandler db;
+    List<Contacts> listOfEncryptedMessages;
+
+
+    ProgressDialog progressDialog;
+    String contents;
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -64,12 +91,9 @@ public class MainMenuActivity extends Activity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainmenu2);
 
-
-        //Prompting user to change to default SMS app
-        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getApplicationContext().startActivity(intent);
+        allSafeboxMessages = new Vector<>();
+        db = new DatabaseHandler(this);
+        listOfEncryptedMessages = db.getAllMessages();
 
 
         ins = this;
@@ -84,16 +108,52 @@ public class MainMenuActivity extends Activity{
         TextView tvWebapp = (TextView) findViewById(R.id.tvWebapp);
         Log.d("DEBUG","ON Main Menu");
 
+/*
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{
+                            Manifest.permission.CAMERA,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    123);
+        }
+        else {
+
+            String[] PERMISSIONS = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            requestPermissions(PERMISSIONS,10);
+
+        }
+
+*/
+
         //If authorisation not granted for camera
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("DEBUG_POST","No permission");
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("DEBUG_PERMISSION","No Camera & External_Storage permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+        }
+        else if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+            Log.d("DEBUG_PERMISSION","No Camera permission");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 50);
         }
+        else if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            Log.d("DEBUG_PERMISSION","No External_Storage permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+        }
+
+
+        //Prompting user to change to default SMS app
+        Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+        intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getApplicationContext().getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getApplicationContext().startActivity(intent);
+
+        /*
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Log.d("DEBUG_POST","No permission");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
         }
+
+        */
 
         getUnreadInboxMessages();
         getUnreadSafeboxMessages();
@@ -145,17 +205,10 @@ public class MainMenuActivity extends Activity{
 
                 }
 
+                // Intent to the login
+                Intent intent = new Intent(getInstance(),LoginActivity.class);
+                startActivityForResult(intent,12);
 
-                IntentIntegrator integrator = new IntentIntegrator(ins);
-                integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-                integrator.setScanningRectangle(700,700);
-                integrator.setPrompt("Faça Scan do QR Code");
-                integrator.setResultDisplayDuration(0);
-                integrator.setCameraId(0);  // Use a specific camera of the device
-                Intent integratorIntent = integrator.createScanIntent();
-
-                //integrator.initiateScan();
-                startActivityForResult(integratorIntent, 11);
 
             }
 
@@ -164,6 +217,137 @@ public class MainMenuActivity extends Activity{
 
 
         });
+
+/*
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                recreate();
+            }
+        },500);
+
+*/
+
+        Thread t = new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    while (!isInterrupted()) {
+                        Thread.sleep(1000);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                getUnreadInboxMessages();
+                                getUnreadSafeboxMessages();
+                            }
+                        });
+                    }
+                } catch (InterruptedException e) {
+                }
+            }
+        };
+
+        t.start();
+    }
+
+
+
+    public class DecryptTask extends AsyncTask{
+        @Override
+        protected Object doInBackground(Object[] objects) {
+
+
+            List<Contacts> listOfMessages;
+            Vector<String> allSafeboxMessagesDecrypted = null;
+            Vector<String> allInboxMessages;
+
+            for(int i=0; i<db.getMessagesCount(); i++){
+                allSafeboxMessages.add(""+listOfEncryptedMessages.get(i).message);
+            }
+
+            try {
+                allSafeboxMessagesDecrypted = decryptMessages
+                        (allSafeboxMessages, MainActivity.getInstance().password);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (GeneralSecurityException e) {
+                e.printStackTrace();
+            }
+
+
+            Map<String, String> paramsBox = new HashMap<>();
+
+            int sizeOfDBSafeBox = 0;
+            for(int i=0; i<db.getMessagesCount();i++){
+                paramsBox.put("SAFEB"+String.valueOf(i),allSafeboxMessagesDecrypted.get(i));
+                Log.d("DEBUG--->","Message #"+i+": "+allSafeboxMessagesDecrypted.get(i));
+                paramsBox.put("SPHON"+String.valueOf(i),listOfEncryptedMessages.get(i).contactNumber);
+                Log.d("DEBUG--->","Contact #"+i+": "+listOfEncryptedMessages.get(i).contactNumber);
+                sizeOfDBSafeBox += 1;
+
+                Log.d("DEBUG--->","Size of DB: "+sizeOfDBSafeBox);
+            }
+
+
+            // Iterate through the Inbox DB
+            listOfMessages = db.getAllMessagesUnencrypted();
+            allInboxMessages = new Vector<>();
+
+
+            int sizeOfDBInbox = 0;
+            for (int i=0; i<db.getMessagesCountUnencrypted(); i++){
+                allInboxMessages.add(""+listOfMessages.get(i).message);
+                paramsBox.put("INBOX"+String.valueOf(i),listOfMessages.get(i).message);
+                paramsBox.put("IPHON"+String.valueOf(i),listOfMessages.get(i).contactNumber);
+                sizeOfDBInbox += 1;
+            }
+
+
+            paramsBox.put("inboxSize",String.valueOf(sizeOfDBInbox));
+            paramsBox.put("safeboxSize",String.valueOf(sizeOfDBSafeBox));
+            paramsBox.put("Hash",contents);
+
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            JSONObject parameterBox = new JSONObject(paramsBox);
+            RequestBody bodyBox = RequestBody.create(JSON, parameterBox.toString ());
+
+            Request requestBox = new Request.Builder()
+                    .url("http://192.168.1.78:800/JSONInbox")
+                    .addHeader("content-type", "application/json; charset=utf-8")
+                    .post(bodyBox)
+                    .build();
+
+            OkHttpClient client = new OkHttpClient();
+            client.newCall(requestBox).enqueue(new Callback() {
+                @Override
+                public void onFailure(Request request, IOException e) {
+                    Log.e("response onFailure ", request.body().toString());
+                }
+
+                @Override
+                public void onResponse(final Response response) throws IOException {
+                    if(!response.isSuccessful()) throw new IOException(
+                            "Unexpected Code: " + response);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d("DEBUG_POST","Report Received");
+                            try {
+                                Log.d("DEBUG_POST",""+response.body().string());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                }
+            });
+
+            return 0;
+        }
     }
 
 
@@ -199,7 +383,7 @@ public class MainMenuActivity extends Activity{
             if (resultCode == RESULT_OK)
             {
                 Log.d("DEBUG QR","Obtain QR Code");
-                String contents = data.getStringExtra("SCAN_RESULT");
+                contents = data.getStringExtra("SCAN_RESULT");
                 Toast.makeText(this, contents, Toast.LENGTH_SHORT).show();
 
 
@@ -207,37 +391,30 @@ public class MainMenuActivity extends Activity{
                 StrictMode.setThreadPolicy(policy);
                 TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(this.TELEPHONY_SERVICE);
                 MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
+
                 String deviceID = tm.getDeviceId();
                 Log.d("DEBUG_POST","HASH: "+contents);
                 Log.d("DEBUG_POST","DEVICE ID: "+deviceID);
+
+
+                // Save the Inbox Array to a JSON Object
                 params.put("Hash",contents);
                 params.put("ID", deviceID);
-                JSONObject parameter = new JSONObject(params);
+
+
+                JSONObject parameterSession = new JSONObject(params);
                 OkHttpClient client = new OkHttpClient();
-                RequestBody body = RequestBody.create(JSON, parameter.toString());
+                RequestBody bodySession = RequestBody.create(JSON, parameterSession.toString());
 
-                Request request = new Request.Builder()
-                        .url("http://192.168.1.15:800/JSONGetter")
+                Request requestSession = new Request.Builder()
+                        .url("http://192.168.1.78:800/JSONGetter")
                         .addHeader("content-type", "application/json; charset=utf-8")
-                        .post(body)
+                        .post(bodySession)
                         .build();
-                /*
 
-                 Request request = new Request.Builder()
-                        .url("http://192.168.43.189:800/JSONGetter")
-                        .get()
-                        .addHeader("content-type", "application/json; charset=utf-8")
-                        .build();
-                 */
-                /*try {
-                    Log.d("DEBUG_POST","Trying to EXECUTE");
-                    //Response response = client.newCall(request).execute();
-                    Log.d("DEBUG_POST","Ola"+response.body().string());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }*/
-                client.newCall(request).enqueue(new Callback() {
+
+                client.newCall(requestSession).enqueue(new Callback() {
                     @Override
                     public void onFailure(Request request, IOException e) {
                         Log.e("response onFailure ", request.body().toString());
@@ -261,6 +438,28 @@ public class MainMenuActivity extends Activity{
 
                     }
                 });
+
+
+
+                progressDialog = new ProgressDialog(this);
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressDialog.setCancelable(false);
+                progressDialog.setMessage("Decrypting Messages...");
+                progressDialog.show();
+                new DecryptTask(){
+                    @Override
+                    protected void onPostExecute(Object o) {
+                        super.onPostExecute(o);
+                        progressDialog.dismiss();
+                        if (o instanceof String){
+                            Toast.makeText(getApplicationContext(), "Unexpected error: " + o, Toast.LENGTH_LONG).show();
+                        }
+                        Toast.makeText(getApplicationContext(),"Decryption Successful", Toast.LENGTH_SHORT);
+                    }
+                }.execute();
+
+
+
             } else if (resultCode == RESULT_CANCELED)
             {
                 Toast.makeText(this, "Not proper QRCODE...!",Toast.LENGTH_SHORT).show();
@@ -274,16 +473,80 @@ public class MainMenuActivity extends Activity{
                 startActivityForResult(intent2, 9);
             }
         }
+
+        if(requestCode == 12){
+            try {
+                MainActivity.getInstance().password = data.getStringExtra("result");
+            }catch (Exception e){
+                Log.d("DEBUG-PASSWORD","No password provided.");
+                return;
+            }
+
+            IntentIntegrator integrator = new IntentIntegrator(ins);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+            integrator.setScanningRectangle(700,700);
+            integrator.setPrompt("Faça Scan do QR Code");
+            integrator.setResultDisplayDuration(0);
+            integrator.setCameraId(0);  // Use a specific camera of the device
+            Intent integratorIntent = integrator.createScanIntent();
+
+            //integrator.initiateScan();
+            startActivityForResult(integratorIntent, 11);
+        }
+    }
+    public String readFromFile(String fileName){
+        File file = new File(this.getFilesDir(),fileName);
+        FileInputStream inputStream;
+        String outputString = null;
+
+        try {
+            int n;
+            inputStream = openFileInput(fileName);
+            StringBuffer fileContents = new StringBuffer("");
+            byte [] buffer = new byte[1024];
+            while ((n = inputStream.read(buffer))!= -1)
+                fileContents.append(new String(buffer, 0, n));
+
+            inputStream.close();
+            outputString = fileContents.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return outputString;
+    }
+
+
+    public Vector<String> decryptMessages(Vector<String> messagesVector, String password) throws IOException, ClassNotFoundException, GeneralSecurityException {
+        RSA rsa = new RSA();
+        String currentMessage = "";
+        String salt = readFromFile("AES.salt");
+        AES.SecretKeys keys = rsa.genKeyWithSalt(password,salt);
+        File privateKeyFile = new File(this.getFilesDir(),"private.key");
+        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(privateKeyFile));
+        AES.CipherTextIvMac cipheredPrivateKey = (AES.CipherTextIvMac) inputStream.readObject();
+        byte[] privateKeyEncoded = AES.decrypt(cipheredPrivateKey,keys);
+        byte[] privateKeyDecoded = Base64.decode(privateKeyEncoded,Base64.DEFAULT);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKeyDecoded);
+        PrivateKey privateKey = kf.generatePrivate(pkcs8EncodedKeySpec);
+        byte[] messageDecoded;
+        Vector<String> decryptedMessages = new Vector<>();
+        for (int i = 0; i < messagesVector.size(); i++) {
+            currentMessage = messagesVector.elementAt(i);
+            messageDecoded = Base64.decode(currentMessage.getBytes(),Base64.DEFAULT);
+            decryptedMessages.add(rsa.decrypt(messageDecoded,privateKey));
+        }
+        return decryptedMessages;
     }
 
     public void getUnreadInboxMessages(){
         DatabaseHandler db = new DatabaseHandler(this);
-        tvInboxUnread.setText(""+db.getMessagesCountUnencrypted());
+        tvInboxUnread.setText(""+db.getNumberOfUnvisitedUnencrypted());
     }
 
     public void getUnreadSafeboxMessages(){
         DatabaseHandler db = new DatabaseHandler(this);
-        tvSafeboxUnread.setText(""+db.getMessagesCount());
+        tvSafeboxUnread.setText(""+db.getNumberOfUnvisited());
     }
 
     @Override

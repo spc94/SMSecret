@@ -1,11 +1,15 @@
 package com.example.spice.smsecret;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Telephony;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsMessage;
 import android.util.Base64;
 import android.util.Log;
@@ -19,6 +23,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.PublicKey;
 import java.util.Vector;
+
+import br.com.goncalves.pugnotification.notification.PugNotification;
 
 /**
  * Created by spice on 31/07/16.
@@ -107,6 +113,49 @@ public class SmsReceiver extends BroadcastReceiver {
                     UnencryptedInbox.getInstance().initTextViewListeners();
                     EncryptedMessages.getInstance().initMessages(contact.getContactNumber());
 
+/*
+                    PugNotification.with(context)
+                            .load()
+                            .title("From: "+senderNumber)
+                            .message(""+msg)
+                            .bigTextStyle("Sample")
+                            .smallIcon(R.drawable.pugnotification_ic_launcher)
+                            .largeIcon(R.drawable.pugnotification_ic_launcher)
+                            .flags(Notification.DEFAULT_ALL)
+                            .simple()
+                            .build();
+                            */
+
+
+                    //Notification for SMS
+/*
+                    Notification notif = new Notification.Builder(context)
+                            .setContentTitle("New mail from " )
+                            .setContentText("KEK")
+                            .setSmallIcon(R.drawable.pugnotification_ic_launcher)
+                            .setStyle(new Notification.BigTextStyle()
+                                    .bigText("a very looooooooooooooooooong string"))
+                            .build();
+*/
+/*
+                    Intent inboxIntent = new Intent(context, UnencryptedInbox.class);
+                    PendingIntent pIntent = PendingIntent.getActivity(context, 0, inboxIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+
+                    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
+                            .setSmallIcon(R.drawable.circle_blue)
+                            .setContentTitle(""+senderNumber)
+                            .setContentText(""+msg)
+                            .setContentIntent(pIntent)
+                            .setStyle(new Notification.BigTextStyle().bigText("STRING STRING STRING SOME MORE STRING"))
+                            .setAutoCancel(true);
+
+                    NotificationManager notificationManager =
+                            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    notificationManager.notify(0,mBuilder.build());
+*/
+
                 }
 
             }
@@ -114,6 +163,8 @@ public class SmsReceiver extends BroadcastReceiver {
             Log.e("DEBUG_MODE","Exception");
             e.printStackTrace();
         }
+
+
     }
 
     public String countryDialingCodeToZeroes(String number){
