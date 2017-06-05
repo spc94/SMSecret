@@ -141,6 +141,7 @@ public class ComposeActivity extends AppCompatActivity {
                 Log.d("DEBUG", "Destination String: " + destinations);
 
                 sendSMS(messageContents);
+                finish();
             }
         });
 
@@ -554,6 +555,7 @@ public class ComposeActivity extends AppCompatActivity {
 
     }
 
+
     private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
 
         // Decode image size
@@ -661,7 +663,6 @@ public class ComposeActivity extends AppCompatActivity {
             settings.setUseSystemSending(true);
             Transaction transaction = new Transaction(this, settings);
             Message multimediaMessage;
-            Log.d("DEBUGIMAGE","IT ENTERS THE FUCKING ELSE");
             for(int i = 0; i < contactsToSend.size(); i++){
                 multimediaMessage = new Message(message, contactsToSend.elementAt(i));
                 multimediaMessage.setImage(attachmentBitmap);

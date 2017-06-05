@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,6 +20,7 @@ import android.provider.Telephony;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
@@ -52,6 +55,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+
+import br.com.goncalves.pugnotification.notification.PugNotification;
 
 /**
  * Created by spice on 10/08/16.
@@ -163,6 +169,35 @@ public class MainMenuActivity extends Activity{
             public void onClick(View v) {
                 Intent intent = new Intent(getInstance(), UnencryptedInbox.class);
                 startActivity(intent);
+            }
+        });
+
+        tvJunk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
+                        .setSmallIcon(R.drawable.circle_blue)
+                        .setContentTitle(""+"SamplePhoneNumber")
+                        .setContentText(""+"A sample message.")
+                        .setAutoCancel(true);
+
+                NotificationManager notificationManager =
+                        (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+
+                notificationManager.notify(12345,mBuilder.build());
+                */
+
+                PugNotification.with(getApplicationContext())
+                        .load()
+                        .title("From: ")
+                        .message("Message")
+                        .bigTextStyle("Sample")
+                        .smallIcon(R.drawable.pugnotification_ic_launcher)
+                        .largeIcon(R.drawable.pugnotification_ic_launcher)
+                        .flags(Notification.DEFAULT_ALL)
+                        .simple()
+                        .build();
             }
         });
 
@@ -316,7 +351,7 @@ public class MainMenuActivity extends Activity{
             RequestBody bodyBox = RequestBody.create(JSON, parameterBox.toString ());
 
             Request requestBox = new Request.Builder()
-                    .url("http://192.168.1.78:800/JSONInbox")
+                    .url("http://192.168.43.189:800/JSONInbox")
                     .addHeader("content-type", "application/json; charset=utf-8")
                     .post(bodyBox)
                     .build();
@@ -446,18 +481,21 @@ public class MainMenuActivity extends Activity{
                 progressDialog.setCancelable(false);
                 progressDialog.setMessage("Decrypting Messages...");
                 progressDialog.show();
-                new DecryptTask(){
-                    @Override
-                    protected void onPostExecute(Object o) {
-                        super.onPostExecute(o);
-                        progressDialog.dismiss();
-                        if (o instanceof String){
-                            Toast.makeText(getApplicationContext(), "Unexpected error: " + o, Toast.LENGTH_LONG).show();
+                try {
+                    new DecryptTask() {
+                        @Override
+                        protected void onPostExecute(Object o) {
+                            super.onPostExecute(o);
+                            progressDialog.dismiss();
+                            if (o instanceof String) {
+                                Toast.makeText(getApplicationContext(), "Unexpected error: " + o, Toast.LENGTH_LONG).show();
+                            }
+                            Toast.makeText(getApplicationContext(), "Decryption Successful", Toast.LENGTH_SHORT);
                         }
-                        Toast.makeText(getApplicationContext(),"Decryption Successful", Toast.LENGTH_SHORT);
-                    }
-                }.execute();
-
+                    }.execute();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
 
 
             } else if (resultCode == RESULT_CANCELED)

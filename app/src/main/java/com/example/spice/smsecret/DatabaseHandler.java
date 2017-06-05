@@ -145,7 +145,6 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         if(cursor.moveToFirst()){
             do{
-                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
                 if(cursor.getString(3).equals("0"))
                     flag = false;
             }while(cursor.moveToNext());
@@ -165,7 +164,6 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         if(cursor.moveToFirst()){
             do{
-                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
                 if(cursor.getString(3).equals("0"))
                     flag = false;
             }while(cursor.moveToNext());
@@ -185,7 +183,6 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         if(cursor.moveToFirst()){
             do{
-                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
                 if(cursor.getString(3).equals("0"))
                     totalUnread += 1;
             }while(cursor.moveToNext());
@@ -205,7 +202,6 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         if(cursor.moveToFirst()){
             do{
-                Log.d("DEBUG","Value in Column: "+cursor.getString(3));
                 if(cursor.getString(3).equals("0"))
                     totalUnread += 1;
             }while(cursor.moveToNext());

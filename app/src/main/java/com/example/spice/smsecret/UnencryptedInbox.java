@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -215,7 +216,8 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
         String strippedNumber = number.substring(5);
         for (int i = 0; i < contactsInPhonebook.size(); i++) {
             if (number.equals(contactsInPhonebook.get(i)[1]) ||
-                    strippedNumber.equals(contactsInPhonebook.get(i)[1]))
+                    strippedNumber.equals(contactsInPhonebook.get(i)[1]) ||
+                        strippedNumber.equals(contactsInPhonebook.get(i)[1].replaceAll(" ","").substring(4)))
                 return contactsInPhonebook.get(i)[0];
         }
         return null;
@@ -264,10 +266,23 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
         for (int i = 0; i < size; i++) {
             Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
             tv[i].setTextSize(25);
-            if(!checkVisited(contactsInView.get(i)))
-                tv[i].setBackgroundColor(Color.rgb(0,160,0));
+            if(!checkVisited(contactsInView.get(i))) {
+                tv[i].setBackgroundColor(Color.rgb(66,134,244));
+                final String contactNumber = tv[i].getText().toString();
+                tv[i].setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View view) {
+                        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(getApplicationContext().CLIPBOARD_SERVICE);
+                        android.content.ClipData clip = android.content.ClipData.newPlainText("text label", contactNumber);
+                        clipboard.setPrimaryClip(clip);
+                        Toast.makeText(getApplicationContext(),"Copied to Clipboard",Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+            }
             else
-                tv[i].setBackgroundColor(Color.GREEN);
+                tv[i].setBackgroundColor(Color.rgb(99, 205, 255));
+
             contactsLayout.addView(tv[i]);
         }
     }

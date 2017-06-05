@@ -215,7 +215,8 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
         String strippedNumber = number.substring(5);
         for (int i = 0; i < contactsInPhonebook.size(); i++) {
             if (number.equals(contactsInPhonebook.get(i)[1]) ||
-                    strippedNumber.equals(contactsInPhonebook.get(i)[1]))
+                    strippedNumber.equals(contactsInPhonebook.get(i)[1]) ||
+                    strippedNumber.equals(contactsInPhonebook.get(i)[1].replaceAll(" ","").substring(4)))
                 return contactsInPhonebook.get(i)[0];
         }
         return null;

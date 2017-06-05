@@ -31,7 +31,7 @@ public class WhitelistedNumbersDAL {
         boolean flag = false;
         WhitelistedNumber whitelistedNumber = new WhitelistedNumber(phoneNumber);
         List<WhitelistedNumber> list =
-                WhitelistedNumber.find(WhitelistedNumber.class, "PHONE_NUMBER=?",phoneNumber);
+                whitelistedNumber.find(WhitelistedNumber.class, "PHONE_NUMBER=?",phoneNumber);
         for (int i=0;i<list.size();i++){
             list.get(i).delete();
             flag = true;

@@ -35,7 +35,7 @@ public class SettingsActivity extends Activity {
     public String name = "";
     public String id;
     public String phone;
-    public ArrayList<Long> array = new ArrayList<>();
+    public ArrayList<String> array = new ArrayList<>();
     public ListView listview;
     public WhitelistAdapter whitelistAdapter;
 
@@ -45,7 +45,7 @@ public class SettingsActivity extends Activity {
         array.clear();
         List<String> list = WhitelistedNumbersDAL.getAllWhitelistedNumbers();
         for(int i=0; i<list.size();i++){
-            array.add(Long.parseLong(list.get(i)));
+            array.add(list.get(i));
         }
 
         whitelistAdapter= new WhitelistAdapter(this,array);
@@ -96,9 +96,10 @@ public class SettingsActivity extends Activity {
             @Override
             public void onClick(View view) {
                 String phoneNumber = etAddPhoneNumber.getText().toString();
+                phoneNumber = countryDialingCodeToZeroes(phoneNumber);
                 if(!WhitelistedNumbersDAL.contactExistsInDB(phoneNumber)) {
                     WhitelistedNumbersDAL.saveContactToDB(phoneNumber);
-                    array.add(Long.parseLong(phoneNumber));
+                    array.add(phoneNumber);
                     whitelistAdapter.notifyDataSetChanged();
                 }
                 hideSoftKeyboard();
@@ -131,10 +132,20 @@ public class SettingsActivity extends Activity {
 
     }
 
+    public String countryDialingCodeToZeroes(String number){
+
+        number.replaceAll(" ","");
+
+        if(number.charAt(0)=='+')
+            return "00" + number.substring(1);
+        else
+            return number;
+    }
+
     public int getItemIDFromString(String s){
 
         for(int i=0; i<array.size(); i++){
-            if(array.get(i)==Long.parseLong(s))
+            if(array.get(i).equals(s))
                 return i;
         }
         return -1;
@@ -168,11 +179,13 @@ public class SettingsActivity extends Activity {
                     phone = pCur.getString
                             (pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                     Log.v("getting phone number", "Phone Number: " + phone);
+                    phone = countryDialingCodeToZeroes(phone);
                     phone = phone.replaceAll(" ","");
                     if(!WhitelistedNumbersDAL.contactExistsInDB(phone)) {
                         Log.d("DEBUG DAL","Contact doesn't exist in DB");
+                        Log.d("DEBUG-TIAGO","NUMERO SETTINGS: "+phone);
                         WhitelistedNumbersDAL.saveContactToDB(phone);
-                        array.add(Long.parseLong(phone));
+                        array.add(phone);
                         whitelistAdapter.notifyDataSetChanged();
                     }
                 }

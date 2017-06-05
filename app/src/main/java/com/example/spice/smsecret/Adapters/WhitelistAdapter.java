@@ -18,11 +18,11 @@ import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
  * ......git branch -d branch_name
  */
 
-public class WhitelistAdapter extends ArrayAdapter<Long> {
+public class WhitelistAdapter extends ArrayAdapter<String> {
 
-    public ArrayList<Long> numbers;
+    public ArrayList<String> numbers;
 
-    public WhitelistAdapter(Context context, ArrayList<Long> numbers) {
+    public WhitelistAdapter(Context context, ArrayList<String> numbers) {
         super(context, 0, numbers);
         this.numbers = numbers;
     }
@@ -38,7 +38,7 @@ public class WhitelistAdapter extends ArrayAdapter<Long> {
         //TextView tvIndex = (TextView) convertView.findViewById(R.id.lvitemtv_index);
         final TextView tvNumber = (TextView) convertView.findViewById(R.id.lvitemtv_number);
         // Populate the data into the template view using the data object
-        Long integer = getItem(position);
+        String integer = getItem(position);
         //tvIndex.setText(""+position);
         tvNumber.setText(""+integer);
 

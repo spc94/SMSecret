@@ -109,7 +109,12 @@ public class LoginActivity extends Activity {
     }
 
     public boolean passwordCheck(String password, byte[] cipheredText, String randomString) throws IOException, GeneralSecurityException, ClassNotFoundException {
-        String saltString = MainActivity.getInstance().readFromFile("AES.salt");
+    String saltString = "";
+        try {
+        saltString = MainActivity.getInstance().readFromFile("AES.salt");
+    }catch (Exception e){
+        e.printStackTrace();
+    }
         RSA rsa = new RSA();
         AES.SecretKeys keys = rsa.genKeyWithSalt(password,saltString);
         File privateKeyFile = new File(this.getFilesDir(),"private.key");
