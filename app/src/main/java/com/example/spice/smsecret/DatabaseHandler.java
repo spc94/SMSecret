@@ -29,6 +29,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     private static final String KEY_NUMBER = "phoneNumber";
     private static final String KEY_MSG = "message";
     private static final String KEY_VISITED = "visited";
+    private static final String KEY_JUNK_FLAG = "junk";
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -39,11 +40,11 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_CONTACTS + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " TEXT,"
-                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
+                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER," + KEY_JUNK_FLAG + " INTEGER" + ")";
 
         String CREATE_CONTACTS_TABLE_UNENCRYPTED = "CREATE TABLE " + TABLE_CONTACTS_UNECNRYPTED + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NUMBER + " TEXT,"
-                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER" + ")";
+                + KEY_MSG + " TEXT," + KEY_VISITED + " INTEGER," + KEY_JUNK_FLAG + " INTEGER" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
         db.execSQL(CREATE_CONTACTS_TABLE_UNENCRYPTED);
     }
@@ -64,6 +65,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         values.put(KEY_NUMBER, contact.getContactNumber()); // Contact Name
         values.put(KEY_MSG, contact.getMessages()); // Contact Phone Number
         values.put(KEY_VISITED,0);
+        values.put(KEY_JUNK_FLAG,contact.getJunkFlag());
 
         // Inserting Row
         db.insert(TABLE_CONTACTS, null, values);
@@ -76,6 +78,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         values.put(KEY_NUMBER, contact.getContactNumber()); // Contact Name
         values.put(KEY_MSG, contact.getMessages()); // Contact Phone Number
         values.put(KEY_VISITED,0);
+        values.put(KEY_JUNK_FLAG,contact.getJunkFlag());
 
         // Inserting Row
         db.insert(TABLE_CONTACTS_UNECNRYPTED, null, values);
@@ -86,14 +89,14 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_CONTACTS, new String[] {KEY_ID,
-                        KEY_NUMBER, KEY_MSG, KEY_VISITED}, KEY_ID + "=?",
+                        KEY_NUMBER, KEY_MSG, KEY_VISITED, KEY_JUNK_FLAG}, KEY_ID + "=?",
                 new String[] { String.valueOf(id) }, null, null, null, null);
         if (cursor != null) {
             cursor.moveToNext();
 
         }
         Contacts contact = new Contacts(cursor.getString(1),
-                cursor.getString(2), Integer.parseInt(cursor.getString(3)));
+                cursor.getString(2), Integer.parseInt(cursor.getString(3)),Integer.parseInt(cursor.getString(4)));
 
         return contact;
     }
@@ -102,14 +105,14 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_CONTACTS_UNECNRYPTED, new String[] {KEY_ID,
-                        KEY_NUMBER, KEY_MSG, KEY_VISITED}, KEY_ID + "=?",
+                        KEY_NUMBER, KEY_MSG, KEY_VISITED, KEY_JUNK_FLAG}, KEY_ID + "=?",
                 new String[] { String.valueOf(id) }, null, null, null, null);
         if (cursor != null) {
             cursor.moveToNext();
 
         }
         Contacts contact = new Contacts(cursor.getString(1),
-                cursor.getString(2), Integer.parseInt(cursor.getString(3)));
+                cursor.getString(2), Integer.parseInt(cursor.getString(3)),Integer.parseInt(cursor.getString(4)));
 
         return contact;
     }
@@ -152,6 +155,8 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         return flag;
     }
+
+
 
     public boolean checkVisitedUnencrypted(String contactNumber){
         SQLiteDatabase db = this.getReadableDatabase();
@@ -202,7 +207,26 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         if(cursor.moveToFirst()){
             do{
-                if(cursor.getString(3).equals("0"))
+                if(cursor.getString(3).equals("0") && cursor.getString(4).equals("0"))
+                    totalUnread += 1;
+            }while(cursor.moveToNext());
+        }
+
+        return totalUnread;
+    }
+
+    public int getNumberOfUnvisitedJunk(){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectQuery = "SELECT * FROM " + TABLE_CONTACTS_UNECNRYPTED;
+
+        Cursor cursor = db.rawQuery(selectQuery,null);
+
+        int totalUnread = 0;
+
+        if(cursor.moveToFirst()){
+            do{
+                if(cursor.getString(3).equals("0") && cursor.getString(4).equals("1"))
                     totalUnread += 1;
             }while(cursor.moveToNext());
         }
@@ -253,6 +277,32 @@ public class DatabaseHandler extends SQLiteOpenHelper{
                 // Adding contact to list
                 contactList.add(contact);
             } while (cursor.moveToNext());
+        }
+
+        // return contact list
+        return contactList;
+    }
+
+    public List<Contacts> getAllJunkMessages() {
+        List<Contacts> contactList = new ArrayList<Contacts>();
+        // Select All Query
+        String selectQuery = "SELECT  * FROM " + TABLE_CONTACTS_UNECNRYPTED;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            if(cursor.getInt(3)==1) {
+                do {
+                    Contacts contact = new Contacts();
+                    contact.setContactNumber(cursor.getString(1));
+                    contact.setMessage(cursor.getString(2));
+                    contact.setVisited(Integer.parseInt(cursor.getString(3)));
+                    // Adding contact to list
+                    contactList.add(contact);
+                } while (cursor.moveToNext());
+            }
         }
 
         // return contact list

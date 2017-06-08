@@ -7,22 +7,31 @@ public class Contacts {
 
     String contactNumber;
     int visited;
+    int junkFlag;
     String message;
 
     Contacts(){
 
     }
 
-    Contacts(String contactNumber, String message, int visited){
+    Contacts(String contactNumber, String message, int visited, int junkFlag){
         setContactNumber(contactNumber);
         setMessage(message);
         setVisited(visited);
+        setJunkFlag(junkFlag);
     }
 
     Contacts(String message){
         setMessage(message);
     }
 
+    public int getJunkFlag() {
+        return junkFlag;
+    }
+
+    public void setJunkFlag(int junkFlag) {
+        this.junkFlag = junkFlag;
+    }
 
     public void setContactNumber(String contactNumber) {
         this.contactNumber = contactNumber;

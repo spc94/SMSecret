@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,10 +20,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-public class EncryptedInbox extends AppCompatActivity implements View.OnClickListener{
+public class JunkInbox extends AppCompatActivity implements View.OnClickListener{
     DatabaseHandler db = new DatabaseHandler(this);
     public int sizeOfTextViewArray;
-    public static EncryptedInbox ins;
+    public static JunkInbox ins;
     public LinearLayout contactsLayout;
     public TextView[] textView;
     public ArrayList<String> contactsInView = new ArrayList<>();
@@ -30,7 +31,7 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
 
     public TextView tvWelcome;
 
-    public static EncryptedInbox getInstance(){
+    public static JunkInbox getInstance(){
         return ins;
     }
 
@@ -62,7 +63,7 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
         Log.d("DEBUG","id: "+ clickedView.getId());
         String id = String.valueOf(contactsInView.get(clickedView.getId()));
         Log.d("DEB","ID: "+id);
-        Intent intent = new Intent(this, EncryptedMessages.class);
+        Intent intent = new Intent(this, UnencryptedMessages.class);
         intent.putExtra("contact",id);
         startActivity(intent);
     }
@@ -160,7 +161,7 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
 
     public TextView[] populateTextViewArray(){
         Log.d("DEB3","Entering populate");
-        int size = db.getMessagesCount();
+        int size = db.getMessagesCountUnencrypted();
         dbSize = size;
         Log.d("DEB","Size of DB "+size);
         //Note - The number of textviews should depend on amount of different contacts and not messages
@@ -169,8 +170,14 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
 
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=size,j = 0; i>=1;i-- )  {
-            String contactNumber = db.getMessage(i).getContactNumber();
+            String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
+            int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
             Log.d("DEB4",contactNumber);
+
+            if(junkFlag == 0){
+                continue;
+            }
+
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);
                 String contactInPhonebook = checkWhitelistedContactExistsOnPhonebook(contactNumber);
@@ -229,8 +236,8 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
                 .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                         new String[]
                                 {
-                                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                                ContactsContract.CommonDataKinds.Phone.NUMBER
+                                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                                        ContactsContract.CommonDataKinds.Phone.NUMBER
                                 }, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
 
         Log.d("DEBUG CONTACTS", "SIZE OF PHONEBOOK: "+managedCursor.getColumnCount());
@@ -263,19 +270,32 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
             return;
 
         for (int i = 0; i < size; i++) {
-                Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
-                tv[i].setTextSize(25);
-                if(!checkVisited(contactsInView.get(i)))
-                    tv[i].setBackgroundColor(Color.rgb(66,134,244));
-                else
-                    tv[i].setBackgroundColor(Color.rgb(99, 205, 255));
-                contactsLayout.addView(tv[i]);
+            Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
+            tv[i].setTextSize(25);
+            if(!checkVisited(contactsInView.get(i))) {
+                tv[i].setBackgroundColor(Color.rgb(66,134,244));
+                final String contactNumber = tv[i].getText().toString();
+                tv[i].setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View view) {
+                        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(getApplicationContext().CLIPBOARD_SERVICE);
+                        android.content.ClipData clip = android.content.ClipData.newPlainText("text label", contactNumber);
+                        clipboard.setPrimaryClip(clip);
+                        Toast.makeText(getApplicationContext(),"Copied to Clipboard",Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+            }
+            else
+                tv[i].setBackgroundColor(Color.rgb(99, 205, 255));
+
+            contactsLayout.addView(tv[i]);
         }
     }
 
 
     public boolean checkVisited(String contactNumber){
-        boolean checkVisited = db.checkVisited(contactNumber);
+        boolean checkVisited = db.checkVisitedUnencrypted(contactNumber);
         Log.d("DEBUG","VISITED BEFORE: "+checkVisited);
         return checkVisited;
     }

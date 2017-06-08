@@ -67,6 +67,7 @@ public class MainMenuActivity extends Activity{
     private static String password;
     private TextView tvInboxUnread;
     private TextView tvSafeboxUnread;
+    private TextView tvJunkUnread;
 
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -90,6 +91,7 @@ public class MainMenuActivity extends Activity{
         super.onResume();
         getUnreadInboxMessages();
         getUnreadSafeboxMessages();
+        getUnreadJunkMessages();
     }
 
     @Override
@@ -109,7 +111,7 @@ public class MainMenuActivity extends Activity{
         tvSafeboxUnread = (TextView) findViewById(R.id.tvSafeBoxUnreadMessages);
         TextView tvCompose = (TextView) findViewById(R.id.tvCompose);
         TextView tvJunk = (TextView) findViewById(R.id.tvJunk);
-        TextView tvJunkUnread = (TextView) findViewById(R.id.tvJunkUnreadMessages);
+        tvJunkUnread = (TextView) findViewById(R.id.tvJunkUnreadMessages);
         TextView tvSettings = (TextView) findViewById(R.id.tvSettings);
         TextView tvWebapp = (TextView) findViewById(R.id.tvWebapp);
         Log.d("DEBUG","ON Main Menu");
@@ -163,6 +165,7 @@ public class MainMenuActivity extends Activity{
 
         getUnreadInboxMessages();
         getUnreadSafeboxMessages();
+        getUnreadJunkMessages();
 
         tvInbox.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,29 +178,8 @@ public class MainMenuActivity extends Activity{
         tvJunk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*
-                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
-                        .setSmallIcon(R.drawable.circle_blue)
-                        .setContentTitle(""+"SamplePhoneNumber")
-                        .setContentText(""+"A sample message.")
-                        .setAutoCancel(true);
-
-                NotificationManager notificationManager =
-                        (NotificationManager) getApplicationContext().getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-
-                notificationManager.notify(12345,mBuilder.build());
-                */
-
-                PugNotification.with(getApplicationContext())
-                        .load()
-                        .title("From: ")
-                        .message("Message")
-                        .bigTextStyle("Sample")
-                        .smallIcon(R.drawable.pugnotification_ic_launcher)
-                        .largeIcon(R.drawable.pugnotification_ic_launcher)
-                        .flags(Notification.DEFAULT_ALL)
-                        .simple()
-                        .build();
+                Intent intent = new Intent(getInstance(),JunkInbox.class);
+                startActivity(intent);
             }
         });
 
@@ -276,6 +258,7 @@ public class MainMenuActivity extends Activity{
                             public void run() {
                                 getUnreadInboxMessages();
                                 getUnreadSafeboxMessages();
+                                getUnreadJunkMessages();
                             }
                         });
                     }
@@ -585,6 +568,12 @@ public class MainMenuActivity extends Activity{
     public void getUnreadSafeboxMessages(){
         DatabaseHandler db = new DatabaseHandler(this);
         tvSafeboxUnread.setText(""+db.getNumberOfUnvisited());
+    }
+
+    public void getUnreadJunkMessages(){
+        DatabaseHandler db = new DatabaseHandler(this);
+        Log.d("DEBUG-JUNK", "Number of Junk Messages: "+db.getNumberOfUnvisitedJunk());
+        tvJunkUnread.setText(""+db.getNumberOfUnvisitedJunk());
     }
 
     @Override

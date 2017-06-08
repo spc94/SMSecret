@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -76,7 +78,7 @@ public class SmsReceiver extends BroadcastReceiver {
                     abortBroadcast();
                     Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
                     msg = encRSA(msg, context);
-                    Contacts contact = new Contacts(senderNumber, msg, 0);
+                    Contacts contact = new Contacts(senderNumber, msg, 0, 0);
 
                     db.addMessage(contact);
                     db.close();
@@ -97,12 +99,31 @@ public class SmsReceiver extends BroadcastReceiver {
                 else{
                     Log.d("DEBUG","ENTERS ELSE");
                     abortBroadcast();
-                    Contacts contact = new Contacts(senderNumber, msg, 0);
+                    Map<String, String> namePhoneCorrespondence = getContactCorrespondence(context);
+                    String notificationSenderNumber = senderNumber;
+
+                    //Check if contact exists on PhoneBook
+                    int junkFlag = 1;
+
+                    if(phoneNumberExists(namePhoneCorrespondence,senderNumber))
+                        junkFlag = 0;
+
+                    Log.d("DEBUG-JUNK","FLAG: "+junkFlag);
+                    Contacts contact = new Contacts(senderNumber, msg, 0, junkFlag);
 
                     db.addMessageUnencrypted(contact);
                     db.close();
 
-                    Intent notificationIntent = new Intent(context,UnencryptedInbox.class);
+                    Intent notificationIntent;
+
+
+                    //If it is a Junk Message, the user will be taken to the Junk Inbox
+                    //Else, the user will be taken to the regular inbox
+                    if(junkFlag == 1)
+                        notificationIntent = new Intent(context,JunkInbox.class);
+                    else
+                        notificationIntent = new Intent(context,UnencryptedInbox.class);
+
                     notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
                                                     Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     PendingIntent notificationPendingIntent =
@@ -114,8 +135,7 @@ public class SmsReceiver extends BroadcastReceiver {
                             );
 
 
-                    Map<String, String> namePhoneCorrespondence = getContactCorrespondence(context);
-                    String notificationSenderNumber = senderNumber;
+
 
                     if(phoneNumberExists(namePhoneCorrespondence,senderNumber))
                         notificationSenderNumber = namePhoneCorrespondence.get(senderNumber);
@@ -124,7 +144,10 @@ public class SmsReceiver extends BroadcastReceiver {
 
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(context)
-                                    .setSmallIcon(R.drawable.pugnotification_ic_placeholder)
+                                    .setSmallIcon(R.drawable.ic_launcher_white)
+                                    .setLargeIcon(BitmapFactory.decodeResource(context.getResources(),
+                                            R.mipmap.ic_launcher))
+                                    .setColor(Color.rgb(218,62,75))
                                     .setContentTitle("From: "+notificationSenderNumber)
                                     .setContentText(""+msg)
                                     .setSound(notificationSound)
@@ -232,12 +255,5 @@ public class SmsReceiver extends BroadcastReceiver {
         return false;
     }
 
-    public void addContact(int senderNumber, String message){
-        Contacts contact = new Contacts(String.valueOf(senderNumber),message,0);
-        contactsVector.add(contact);
-    }
 
-
-    private class List<T> {
-    }
 }

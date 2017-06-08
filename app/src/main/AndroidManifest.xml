@@ -47,6 +47,9 @@
         <activity android:name=".EncryptedInbox" />
         <activity android:name=".UnencryptedInbox"/>
         <activity android:name=".UnencryptedMessages"/>
+        <activity android:name=".JunkInbox"/>
+        <activity android:name=".JunkMessages"/>
+
 
         <receiver android:name=".MmsReceiver"
             android:permission="android.permission.BROADCAST_WAP_PUSH">

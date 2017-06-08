@@ -171,7 +171,13 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=size,j = 0; i>=1;i-- )  {
             String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
+            int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
             Log.d("DEB4",contactNumber);
+
+            if(junkFlag == 1){
+                continue;
+            }
+
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);
                 String contactInPhonebook = checkWhitelistedContactExistsOnPhonebook(contactNumber);
