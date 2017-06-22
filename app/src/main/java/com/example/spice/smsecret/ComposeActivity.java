@@ -79,6 +79,12 @@ public class ComposeActivity extends AppCompatActivity {
         final ImageButton btAttachment = (ImageButton) findViewById(R.id.btAttachment);
 
 
+        String intentContactNumber = getIntent().getStringExtra("phoneNumber");
+        Log.d("DEBUG-COMPOSE", "Value of intentContactNumber = "+intentContactNumber);
+
+
+        if(intentContactNumber != null)
+            intentPhoneNumberToEditText(intentContactNumber);
 
         etContactsToSend = (EditText) findViewById(R.id.etContactToSend);
         //retContactsToSend = (RecipientEditTextView) findViewById(R.id.retContacts);
@@ -338,6 +344,35 @@ public class ComposeActivity extends AppCompatActivity {
 
             }
         });
+
+    }
+
+    public void intentPhoneNumberToEditText(String phoneNumber){
+            canListenInput = false;
+            UnderlineSpan us;
+            ssb.clearSpans();
+            ssb.clear();
+            contactsToSend.clear();
+
+
+
+                    us = new UnderlineSpan();
+                    String temp = namePhoneCorrespondence.get(phoneNumber);
+                    if(temp != null) {
+                        contactsToSend.add(temp);
+                        ssb.append(temp, us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        ssb.append(" ");
+                    }
+                    else {
+                        contactsToSend.add(phoneNumber);
+                        ssb.append(phoneNumber, us, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        ssb.append(" ");
+                    }
+
+                etContactsToSend.setText(ssb);
+
+                repositionEditText();
+                canListenInput = true;
 
     }
 

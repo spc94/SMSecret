@@ -50,6 +50,7 @@
         <activity android:name=".JunkInbox"/>
         <activity android:name=".JunkMessages"/>
 
+        <receiver android:name=".AlarmReceiver" />
 
         <receiver android:name=".MmsReceiver"
             android:permission="android.permission.BROADCAST_WAP_PUSH">

@@ -3,6 +3,7 @@ package com.example.spice.smsecret;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -344,6 +345,58 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         db.delete(TABLE_CONTACTS_UNECNRYPTED, KEY_ID + " = ?",
                 new String[] { String.valueOf(id) });
         db.close();
+    }
+
+    public void deleteNTHRowUnencrypted(int id){
+        int rowToDelete  = id;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("delete from "+TABLE_CONTACTS_UNECNRYPTED+" where "+ KEY_ID+" = " +
+                "(select "+KEY_ID+" from (select "+KEY_ID+" from "+TABLE_CONTACTS_UNECNRYPTED+" order by " +
+                KEY_ID + " limit " + rowToDelete + ",1) as t)");
+    }
+
+    public void deleteNTHRowEncrypted(int id){
+        int rowToDelete  = id;
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("delete from "+TABLE_CONTACTS+" where "+ KEY_ID+" = " +
+                "(select "+KEY_ID+" from (select "+KEY_ID+" from "+TABLE_CONTACTS+" order by " +
+                KEY_ID + " limit " + rowToDelete + ",1) as t)");
+    }
+
+    public int getMaxIDEncrypted(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + KEY_ID +" FROM " + TABLE_CONTACTS + " ORDER BY " + KEY_ID + " DESC LIMIT 1";
+        Cursor cursor = db.rawQuery(query,null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+        }
+        try {
+            int ret = cursor.getInt(0);
+            return ret;
+        }catch (CursorIndexOutOfBoundsException e){
+            e.printStackTrace();
+            return -1;
+        }
+
+    }
+
+    public int getMaxIDUnencrypted(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + KEY_ID +" FROM " + TABLE_CONTACTS_UNECNRYPTED + " ORDER BY " + KEY_ID + " DESC LIMIT 1";
+        Cursor cursor = db.rawQuery(query,null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+        }
+        try {
+            int ret = cursor.getInt(0);
+            return ret;
+        }catch (CursorIndexOutOfBoundsException e){
+            e.printStackTrace();
+            return -1;
+        }
+
     }
 
 

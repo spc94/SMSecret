@@ -168,8 +168,15 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
         contactsInView.clear();
 
         //for (int i = 1, j = 0; i < size+1; i++) {
-        for (int i=size,j = 0; i>=1;i-- )  {
-            String contactNumber = db.getMessage(i).getContactNumber();
+        for (int i=db.getMaxIDEncrypted(),j = 0; i>=1;i-- )  {
+            if(i == -1)
+                break;
+            String contactNumber;
+            try {
+                contactNumber = db.getMessage(i).getContactNumber();
+            }catch (Exception e){
+                continue;
+            }
             Log.d("DEB4",contactNumber);
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);

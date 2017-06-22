@@ -1,9 +1,12 @@
 package com.example.spice.smsecret;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Base64;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,16 +28,19 @@ import java.util.Vector;
 
 public class UnencryptedMessages extends Activity {
     public LinearLayout messagesLayout;
+    public String contactNumber;
     private static UnencryptedMessages ins;
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         ins = this;
         setContentView(R.layout.activity_messages);
         messagesLayout = (LinearLayout)findViewById(R.id.messages);
+
+        ImageButton replyButton = (ImageButton) findViewById(R.id.btReplyTo);
         //Obtain extra parameters
         Bundle b = getIntent().getExtras();
         //Assigned passed parameter to a var
-        String contactNumber = b.getString("contact");
+        contactNumber = b.getString("contact");
 
         DatabaseHandler db = new DatabaseHandler(this);
         db.changeVisitedTrueUnencrypted(contactNumber);
@@ -48,6 +54,19 @@ public class UnencryptedMessages extends Activity {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+
+
+        replyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                //Intent intent = new Intent(,ComposeActivity.class);
+                //intent.putExtra("phoneNumber",contactNumber);
+            }
+        });
+    }
+
+    public void replyToOnClick(View v){
     }
 
     public void cleanLayout(){

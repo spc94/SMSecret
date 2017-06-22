@@ -169,8 +169,16 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
         contactsInView.clear();
 
         //for (int i = 1, j = 0; i < size+1; i++) {
-        for (int i=size,j = 0; i>=1;i-- )  {
-            String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
+        for (int i=db.getMaxIDUnencrypted(),j = 0; i>=1;i-- )  {
+            if(i == -1)
+                break;
+            Log.d("DEBUG-POPULATE", "Current i = "+i);
+            String contactNumber;
+            try {
+                contactNumber = db.getMessageUnencrypted(i).getContactNumber();
+            }catch(Exception e){
+                continue;
+            }
             int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
             Log.d("DEB4",contactNumber);
 
@@ -240,14 +248,11 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
                                         ContactsContract.CommonDataKinds.Phone.NUMBER
                                 }, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
 
-        Log.d("DEBUG CONTACTS", "SIZE OF PHONEBOOK: "+managedCursor.getColumnCount());
 
         while(managedCursor.moveToNext()){
             String numberWithoutSpaces = managedCursor.getString(1).replaceAll(" ","");
             String [] temp = {managedCursor.getString(0),numberWithoutSpaces};
             contacts.add(temp);
-            Log.d("DEBUG CONTACTS",""+managedCursor.getString(0));
-            Log.d("DEBUG CONTACTS",""+managedCursor.getString(1));
         }
 
         return contacts;

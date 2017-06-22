@@ -3,10 +3,13 @@ package com.example.spice.smsecret;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
@@ -14,8 +17,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -43,6 +48,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.GeneralSecurityException;
@@ -50,6 +56,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +122,7 @@ public class MainMenuActivity extends Activity{
         TextView tvSettings = (TextView) findViewById(R.id.tvSettings);
         TextView tvWebapp = (TextView) findViewById(R.id.tvWebapp);
         Log.d("DEBUG","ON Main Menu");
+
 
 /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -252,7 +260,7 @@ public class MainMenuActivity extends Activity{
             public void run() {
                 try {
                     while (!isInterrupted()) {
-                        Thread.sleep(1000);
+                        Thread.sleep(2000);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -263,7 +271,7 @@ public class MainMenuActivity extends Activity{
                         });
                     }
                 } catch (InterruptedException e) {
-                }
+                } catch (Exception e){}
             }
         };
 
@@ -334,7 +342,7 @@ public class MainMenuActivity extends Activity{
             RequestBody bodyBox = RequestBody.create(JSON, parameterBox.toString ());
 
             Request requestBox = new Request.Builder()
-                    .url("http://192.168.43.189:800/JSONInbox")
+                    .url("http://192.168.1.16:800/JSONInbox")
                     .addHeader("content-type", "application/json; charset=utf-8")
                     .post(bodyBox)
                     .build();
@@ -426,7 +434,7 @@ public class MainMenuActivity extends Activity{
                 RequestBody bodySession = RequestBody.create(JSON, parameterSession.toString());
 
                 Request requestSession = new Request.Builder()
-                        .url("http://192.168.1.78:800/JSONGetter")
+                        .url("http://192.168.1.16:800/JSONGetter")
                         .addHeader("content-type", "application/json; charset=utf-8")
                         .post(bodySession)
                         .build();
@@ -442,6 +450,66 @@ public class MainMenuActivity extends Activity{
                     public void onResponse(final Response response) throws IOException {
                         if(!response.isSuccessful()) throw new IOException(
                                 "Unexpected Code: " + response);
+                        else{
+                            //We have a valid Session, therefore we must save the Hash to the
+                            // Internal Memory
+
+                            File sessionHash = new File(ins.getFilesDir(),"session.hash");
+                            sessionHash.createNewFile();
+                            FileOutputStream stream = new FileOutputStream(sessionHash,false);
+                            try{
+                                stream.write(contents.getBytes());
+                            } finally {
+                                stream.close();
+                            }
+
+
+                            // Creating an Alarm Manager to keep checking the server
+                            final AlarmManager alarmMgr =
+                                    (AlarmManager)ins.getSystemService(Context.ALARM_SERVICE);
+                            Intent intent = new Intent(ins, AlarmReceiver.class);
+                            intent.putExtra("hash", contents);
+                            intent.putExtra("cancel","false");
+                            PendingIntent pendingIntent =
+                                    PendingIntent.getBroadcast(ins, 1001, intent,
+                                            PendingIntent.FLAG_UPDATE_CURRENT);
+                            Calendar time = Calendar.getInstance();
+                            time.setTimeInMillis(System.currentTimeMillis());
+                            time.add(Calendar.SECOND, 5);
+                            alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(), 1000*10,
+                                    pendingIntent);
+
+                            // Stopping the previous alarm after 4 minutes
+                            final AlarmManager cancelAlarmMgr =
+                                    (AlarmManager)ins.getSystemService(Context.ALARM_SERVICE);
+                            Intent intentCancel = new Intent(ins, AlarmReceiver.class);
+                            intentCancel.putExtra("cancel","true");
+                            PendingIntent pendingIntentCancel =
+                                    PendingIntent.getBroadcast(ins, 0, intent,
+                                            PendingIntent.FLAG_ONE_SHOT);
+                            time = Calendar.getInstance();
+                            time.setTimeInMillis(System.currentTimeMillis());
+                            time.add(Calendar.SECOND, 120*2);
+                            cancelAlarmMgr.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis(),
+                                    pendingIntentCancel);
+
+                            //Trying to read from file
+                            int length = (int) sessionHash.length();
+
+                            byte[] bytes = new byte[length];
+
+                            FileInputStream in = new FileInputStream(sessionHash);
+                            try {
+                                in.read(bytes);
+                            } finally {
+                                in.close();
+                            }
+
+                            String contents = new String(bytes);
+
+                            Log.d("DEBUG-FILE","Contents: "+contents);
+                        }
+
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -463,18 +531,28 @@ public class MainMenuActivity extends Activity{
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 progressDialog.setCancelable(false);
                 progressDialog.setMessage("Decrypting Messages...");
-                progressDialog.show();
+                try {
+                    progressDialog.show();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
                 try {
                     new DecryptTask() {
                         @Override
                         protected void onPostExecute(Object o) {
                             super.onPostExecute(o);
                             progressDialog.dismiss();
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                progressDialog.dismiss();
+                                MainMenuActivity.super.onDestroy();
+                            }
+                            MainMenuActivity.super.onDestroy();
                             if (o instanceof String) {
                                 Toast.makeText(getApplicationContext(), "Unexpected error: " + o, Toast.LENGTH_LONG).show();
                             }
                             Toast.makeText(getApplicationContext(), "Decryption Successful", Toast.LENGTH_SHORT);
                         }
+
                     }.execute();
                 }catch (Exception e){
                     e.printStackTrace();
@@ -515,6 +593,9 @@ public class MainMenuActivity extends Activity{
             startActivityForResult(integratorIntent, 11);
         }
     }
+
+
+
     public String readFromFile(String fileName){
         File file = new File(this.getFilesDir(),fileName);
         FileInputStream inputStream;
@@ -572,7 +653,6 @@ public class MainMenuActivity extends Activity{
 
     public void getUnreadJunkMessages(){
         DatabaseHandler db = new DatabaseHandler(this);
-        Log.d("DEBUG-JUNK", "Number of Junk Messages: "+db.getNumberOfUnvisitedJunk());
         tvJunkUnread.setText(""+db.getNumberOfUnvisitedJunk());
     }
 

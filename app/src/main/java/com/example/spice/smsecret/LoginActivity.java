@@ -87,6 +87,9 @@ public class LoginActivity extends Activity {
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                     return false;
+                } catch (Exception e){
+                    e.printStackTrace();
+                    return false;
                 }
 
                 return true;
