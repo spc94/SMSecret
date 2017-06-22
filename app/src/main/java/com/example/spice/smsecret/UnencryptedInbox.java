@@ -4,12 +4,16 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,6 +75,8 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.support.v7.app.ActionBar AB=getSupportActionBar();
+        AB.hide();
         setContentView(R.layout.activity_inbox);
         tvWelcome = (TextView) findViewById(R.id.tvInboxWelcome);
         ins = this;
@@ -270,15 +276,24 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
 
     public void addContactsToLayout(LinearLayout contactsLayout, TextView[] tv, int size){
         //int flag = 0;
+        contactsLayout.setMinimumHeight(75);
+        Log.d("DEBUG-LAYOUT","SIZE" + contactsLayout.getHeight());
 
         if(dbSize ==0)
             return;
 
         for (int i = 0; i < size; i++) {
             Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
-            tv[i].setTextSize(25);
             if(!checkVisited(contactsInView.get(i))) {
                 tv[i].setBackgroundColor(Color.rgb(66,134,244));
+
+
+                tv[i].setTextSize(30);
+                //tv[i].setTypeface(null, Typeface.BOLD);
+                tv[i].setGravity(Gravity.CENTER_VERTICAL);
+                tv[i].setPadding(35,0,0,0);
+                tv[i].setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        225));
                 final String contactNumber = tv[i].getText().toString();
                 tv[i].setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
@@ -291,9 +306,15 @@ public class UnencryptedInbox extends AppCompatActivity implements View.OnClickL
                     }
                 });
             }
-            else
+            else {
                 tv[i].setBackgroundColor(Color.rgb(99, 205, 255));
-
+                tv[i].setTextSize(30);
+                //tv[i].setTypeface(null, Typeface.BOLD);
+                tv[i].setGravity(Gravity.CENTER_VERTICAL);
+                tv[i].setPadding(35,0,0,0);
+                tv[i].setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        225));
+            }
             contactsLayout.addView(tv[i]);
         }
     }

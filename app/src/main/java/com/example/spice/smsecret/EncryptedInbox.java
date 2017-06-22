@@ -9,6 +9,7 @@ import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -70,6 +71,8 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.support.v7.app.ActionBar AB=getSupportActionBar();
+        AB.hide();
         setContentView(R.layout.activity_inbox);
         tvWelcome = (TextView) findViewById(R.id.tvInboxWelcome);
         ins = this;
@@ -272,10 +275,24 @@ public class EncryptedInbox extends AppCompatActivity implements View.OnClickLis
         for (int i = 0; i < size; i++) {
                 Log.d("DEBUG XX","Contents of TextView before layout = "+tv[0].getText().toString());
                 tv[i].setTextSize(25);
-                if(!checkVisited(contactsInView.get(i)))
-                    tv[i].setBackgroundColor(Color.rgb(66,134,244));
-                else
+                if(!checkVisited(contactsInView.get(i))) {
+                    tv[i].setBackgroundColor(Color.rgb(66, 134, 244));
+                    tv[i].setTextSize(30);
+                    //tv[i].setTypeface(null, Typeface.BOLD);
+                    tv[i].setGravity(Gravity.CENTER_VERTICAL);
+                    tv[i].setPadding(35,0,0,0);
+                    tv[i].setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            225));
+                }
+                else {
                     tv[i].setBackgroundColor(Color.rgb(99, 205, 255));
+                    tv[i].setTextSize(30);
+                    //tv[i].setTypeface(null, Typeface.BOLD);
+                    tv[i].setGravity(Gravity.CENTER_VERTICAL);
+                    tv[i].setPadding(35,0,0,0);
+                    tv[i].setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            225));
+                }
                 contactsLayout.addView(tv[i]);
         }
     }
