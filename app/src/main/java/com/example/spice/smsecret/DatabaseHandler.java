@@ -399,6 +399,26 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
     }
 
+    public int getMaxIDJunk(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + KEY_ID +" FROM " + TABLE_CONTACTS_UNECNRYPTED +" WHERE " + KEY_JUNK_FLAG + "=1 ORDER BY " + KEY_ID + " DESC LIMIT 1";
+        Cursor cursor = db.rawQuery(query,null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+        }
+        try {
+            int ret = cursor.getInt(0);
+            return ret;
+        }catch (CursorIndexOutOfBoundsException e){
+            e.printStackTrace();
+            return -1;
+        }catch (Exception e){
+            e.printStackTrace();
+            return -1;
+        }
+
+    }
+
 
 
 }

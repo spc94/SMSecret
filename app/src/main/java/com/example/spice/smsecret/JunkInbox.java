@@ -169,14 +169,18 @@ public class JunkInbox extends AppCompatActivity implements View.OnClickListener
         contactsInView.clear();
 
         //for (int i = 1, j = 0; i < size+1; i++) {
-        for (int i=size,j = 0; i>=1;i-- )  {
-            String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
-            int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
-            Log.d("DEB4",contactNumber);
+        for (int i=db.getMaxIDJunk(),j = 0; i>=1;i-- )  {
 
+            if(i == -1)
+                break;
+
+            int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
             if(junkFlag == 0){
                 continue;
             }
+            String contactNumber = db.getMessageUnencrypted(i).getContactNumber();
+            Log.d("DEB4",contactNumber);
+
 
             if (checkContactExists(contactNumber) == false) {
                 contactsInView.add(contactNumber);

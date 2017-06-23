@@ -19,6 +19,8 @@ android {
     }
     productFlavors {
     }
+
+    useLibrary 'org.apache.http.legacy'
 }
 
 dependencies {
@@ -53,4 +55,4 @@ repositories {
     maven {
         url "https://raw.github.com/embarkmobile/zxing-android-minimal/mvn-repo/maven-repository/"
     }
-}
+    }

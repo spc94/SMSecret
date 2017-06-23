@@ -36,13 +36,19 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.CipherSuite;
+import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.TlsVersion;
 import com.squareup.okhttp.internal.framed.FrameReader;
 
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -54,15 +60,27 @@ import java.io.ObjectInputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import br.com.goncalves.pugnotification.notification.PugNotification;
 
@@ -341,13 +359,37 @@ public class MainMenuActivity extends Activity{
             JSONObject parameterBox = new JSONObject(paramsBox);
             RequestBody bodyBox = RequestBody.create(JSON, parameterBox.toString ());
 
+            OkHttpClient client = new OkHttpClient();
+
+            //For HTTPS
+            String serverAddress = "http://192.168.1.78:800/JSONInbox";
+            if (serverAddress.contains("https")) {
+                trustEveryone();
+                ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                        .tlsVersions(TlsVersion.TLS_1_2)
+                        .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
+                        .supportsTlsExtensions(true)
+                        .build();
+
+                client.setConnectionSpecs(Collections.singletonList(spec));
+                client.setHostnameVerifier(new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                });
+                client.setConnectTimeout(1, TimeUnit.HOURS);
+            }
+
             Request requestBox = new Request.Builder()
-                    .url("http://192.168.1.16:800/JSONInbox")
+                    .url(serverAddress)
                     .addHeader("content-type", "application/json; charset=utf-8")
                     .post(bodyBox)
                     .build();
 
-            OkHttpClient client = new OkHttpClient();
+
+
+
             client.newCall(requestBox).enqueue(new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
@@ -428,13 +470,33 @@ public class MainMenuActivity extends Activity{
                 params.put("Hash",contents);
                 params.put("ID", deviceID);
 
+                OkHttpClient client = new OkHttpClient();
+
+
+                String serverAddress = "http://192.168.1.78:800/JSONGetter";
+                if (serverAddress.contains("https")) {
+                    trustEveryone();
+                    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+                            .tlsVersions(TlsVersion.TLS_1_2)
+                            .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
+                            .supportsTlsExtensions(true)
+                            .build();
+
+                    client.setConnectionSpecs(Collections.singletonList(spec));
+                    client.setHostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    });
+                    client.setConnectTimeout(1, TimeUnit.HOURS);
+                }
 
                 JSONObject parameterSession = new JSONObject(params);
-                OkHttpClient client = new OkHttpClient();
                 RequestBody bodySession = RequestBody.create(JSON, parameterSession.toString());
 
                 Request requestSession = new Request.Builder()
-                        .url("http://192.168.1.16:800/JSONGetter")
+                        .url(serverAddress)
                         .addHeader("content-type", "application/json; charset=utf-8")
                         .post(bodySession)
                         .build();
@@ -444,6 +506,7 @@ public class MainMenuActivity extends Activity{
                     @Override
                     public void onFailure(Request request, IOException e) {
                         Log.e("response onFailure ", request.body().toString());
+                        e.printStackTrace();
                     }
 
                     @Override
@@ -666,5 +729,27 @@ public class MainMenuActivity extends Activity{
         super.onPause();
         //getInstance().finish();
         //System.exit(0);
+    }
+
+    private void trustEveryone() {
+        try {
+            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }});
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, new X509TrustManager[]{new X509TrustManager(){
+                public void checkClientTrusted(X509Certificate[] chain,
+                                               String authType) throws CertificateException {}
+                public void checkServerTrusted(X509Certificate[] chain,
+                                               String authType) throws CertificateException {}
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }}}, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(
+                    context.getSocketFactory());
+        } catch (Exception e) { // should never happen
+            e.printStackTrace();
+        }
     }
 }
