@@ -18,6 +18,8 @@ import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.squareup.okhttp.OkHttpClient;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,7 +31,17 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.util.Calendar;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Created by spice on 6/20/17.
@@ -58,8 +70,48 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             // Trying to obtain JSON from UNENCRYPTED PAGE
             try {
-                URL url = new URL("http://192.168.1.78:800/Instructions/deleteSmsUnenc?Hash=" + intent.getStringExtra("hash"));
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                SSLContext sslContext;
+                TrustManager[] trustManagers;
+                try {
+                    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    keyStore.load(null, null);
+                    InputStream certInputStream = context.getAssets().open("server.pem");
+                    BufferedInputStream bis = new BufferedInputStream(certInputStream);
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    while (bis.available() > 0) {
+                        Certificate cert = certificateFactory.generateCertificate(bis);
+                        keyStore.setCertificateEntry("localhost", cert);
+                    }
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(keyStore);
+                    trustManagers = trustManagerFactory.getTrustManagers();
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, trustManagers, null);
+                    Log.d("DEBUG-CERT", "Certificate Loaded onto sslContext");
+                } catch (Exception e) {
+                    Log.d("Certificate Error", "Error: "+e.getMessage());
+                    e.printStackTrace(); //TODO replace with real exception handling tailored to your needs
+                    return;
+                }
+
+                Log.d("DEBUG-CERT-R", "Certificate Loaded onto client");
+
+                URL url = new URL("https://192.168.1.16/lara/public/Instructions/deleteSmsUnenc?Hash=" + intent.getStringExtra("hash"));
+                HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+                urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+                HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        HostnameVerifier hv =
+                                HttpsURLConnection.getDefaultHostnameVerifier();
+                        return hv.verify("localhost", session);
+                    }
+                };
+
+                urlConnection.setHostnameVerifier(hostnameVerifier);
+
                 try {
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -109,8 +161,48 @@ public class AlarmReceiver extends BroadcastReceiver {
             // Trying to obtain JSON from ENCRYPTED PAGE
 
             try {
-                URL url = new URL("http://192.168.1.78:800/Instructions/deleteSmsEnc?Hash=" + intent.getStringExtra("hash"));
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                SSLContext sslContext;
+                TrustManager[] trustManagers;
+                try {
+                    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    keyStore.load(null, null);
+                    InputStream certInputStream = context.getAssets().open("server.pem");
+                    BufferedInputStream bis = new BufferedInputStream(certInputStream);
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    while (bis.available() > 0) {
+                        Certificate cert = certificateFactory.generateCertificate(bis);
+                        keyStore.setCertificateEntry("localhost", cert);
+                    }
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(keyStore);
+                    trustManagers = trustManagerFactory.getTrustManagers();
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, trustManagers, null);
+                    Log.d("DEBUG-CERT", "Certificate Loaded onto sslContext");
+                } catch (Exception e) {
+                    Log.d("Certificate Error", "Error: "+e.getMessage());
+                    e.printStackTrace(); //TODO replace with real exception handling tailored to your needs
+                    return;
+                }
+
+                Log.d("DEBUG-CERT-R", "Certificate Loaded onto client");
+
+
+                URL url = new URL("https://192.168.1.16/lara/public/Instructions/deleteSmsEnc?Hash=" + intent.getStringExtra("hash"));
+                HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+                urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+                HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        HostnameVerifier hv =
+                                HttpsURLConnection.getDefaultHostnameVerifier();
+                        return hv.verify("localhost", session);
+                    }
+                };
+
+                urlConnection.setHostnameVerifier(hostnameVerifier);
                 try {
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -161,8 +253,48 @@ public class AlarmReceiver extends BroadcastReceiver {
             // Trying to obtain the JSON from SEND SMS Page
 
             try {
-                URL url = new URL("http://192.168.1.78:800/Instructions/sendSms?Hash=" + intent.getStringExtra("hash"));
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                SSLContext sslContext;
+                TrustManager[] trustManagers;
+                try {
+                    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    keyStore.load(null, null);
+                    InputStream certInputStream = context.getAssets().open("server.pem");
+                    BufferedInputStream bis = new BufferedInputStream(certInputStream);
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    while (bis.available() > 0) {
+                        Certificate cert = certificateFactory.generateCertificate(bis);
+                        keyStore.setCertificateEntry("localhost", cert);
+                    }
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(keyStore);
+                    trustManagers = trustManagerFactory.getTrustManagers();
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, trustManagers, null);
+                    Log.d("DEBUG-CERT", "Certificate Loaded onto sslContext");
+                } catch (Exception e) {
+                    Log.d("Certificate Error", "Error: "+e.getMessage());
+                    e.printStackTrace(); //TODO replace with real exception handling tailored to your needs
+                    return;
+                }
+
+                Log.d("DEBUG-CERT-R", "Certificate Loaded onto client");
+
+                URL url = new URL("https://192.168.1.16/lara/public/Instructions/sendSms?Hash=" + intent.getStringExtra("hash"));
+                HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+                urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+                HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        HostnameVerifier hv =
+                                HttpsURLConnection.getDefaultHostnameVerifier();
+                        return hv.verify("localhost", session);
+                    }
+                };
+
+                urlConnection.setHostnameVerifier(hostnameVerifier);
+
                 try {
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in));

@@ -52,16 +52,23 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
@@ -79,7 +86,9 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import br.com.goncalves.pugnotification.notification.PugNotification;
@@ -359,26 +368,60 @@ public class MainMenuActivity extends Activity{
             JSONObject parameterBox = new JSONObject(paramsBox);
             RequestBody bodyBox = RequestBody.create(JSON, parameterBox.toString ());
 
-            OkHttpClient client = new OkHttpClient();
 
+            SSLContext sslContext = null;
+            TrustManager[] trustManagers;
+
+            try {
+                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                keyStore.load(null, null);
+                InputStream certInputStream = getAssets().open("server.pem");
+                BufferedInputStream bis = new BufferedInputStream(certInputStream);
+                CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                while (bis.available() > 0) {
+                    Certificate cert = certificateFactory.generateCertificate(bis);
+                    keyStore.setCertificateEntry("localhost", cert);
+                }
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                trustManagerFactory.init(keyStore);
+                trustManagers = trustManagerFactory.getTrustManagers();
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, trustManagers, null);
+                Log.d("DEBUG-CERT", "Certificate Loaded onto sslContext");
+            } catch (Exception e) {
+                Log.d("DEBUG-CERT", "Error: "+e.getMessage());
+                e.printStackTrace(); //TODO replace with real exception handling tailored to your needs
+            }
+
+            OkHttpClient client = new OkHttpClient()
+                    .setSslSocketFactory(sslContext.getSocketFactory());
+
+
+            Log.d("DEBUG-CERT", "Certificate Loaded onto client");
+
+            //OkHttpClient client = new OkHttpClient();
             //For HTTPS
-            String serverAddress = "http://192.168.1.78:800/JSONInbox";
+            String serverAddress = "https://192.168.1.16/lara/public/JSONInbox";
             if (serverAddress.contains("https")) {
-                trustEveryone();
                 ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                         .tlsVersions(TlsVersion.TLS_1_2)
                         .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
                         .supportsTlsExtensions(true)
                         .build();
 
-                client.setConnectionSpecs(Collections.singletonList(spec));
-                client.setHostnameVerifier(new HostnameVerifier() {
+                HostnameVerifier hostnameVerifier = new HostnameVerifier() {
                     @Override
                     public boolean verify(String hostname, SSLSession session) {
-                        return true;
+                        HostnameVerifier hv =
+                                HttpsURLConnection.getDefaultHostnameVerifier();
+                        return hv.verify("localhost", session);
                     }
-                });
+                };
+
+                client.setHostnameVerifier(hostnameVerifier);
+                client.setConnectionSpecs(Collections.singletonList(spec));
                 client.setConnectTimeout(1, TimeUnit.HOURS);
+                Log.d("DEBUG-CERT", "Certificate Loaded onto connection spec");
             }
 
             Request requestBox = new Request.Builder()
@@ -389,15 +432,17 @@ public class MainMenuActivity extends Activity{
 
 
 
-
             client.newCall(requestBox).enqueue(new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
                     Log.e("response onFailure ", request.body().toString());
+
+                    Log.d("DEBUG-CERT", "onFailure: "+e.getMessage());
                 }
 
                 @Override
                 public void onResponse(final Response response) throws IOException {
+                    Log.d("DEBUG-CERT", "onResponse");
                     if(!response.isSuccessful()) throw new IOException(
                             "Unexpected Code: " + response);
                     runOnUiThread(new Runnable() {
@@ -470,26 +515,60 @@ public class MainMenuActivity extends Activity{
                 params.put("Hash",contents);
                 params.put("ID", deviceID);
 
-                OkHttpClient client = new OkHttpClient();
+                //Load Certificate
 
+                SSLContext sslContext;
+                TrustManager[] trustManagers;
+                try {
+                    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    keyStore.load(null, null);
+                    InputStream certInputStream = getAssets().open("server.pem");
+                    BufferedInputStream bis = new BufferedInputStream(certInputStream);
+                    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                    while (bis.available() > 0) {
+                        Certificate cert = certificateFactory.generateCertificate(bis);
+                        keyStore.setCertificateEntry("localhost", cert);
+                    }
+                    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    trustManagerFactory.init(keyStore);
+                    trustManagers = trustManagerFactory.getTrustManagers();
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, trustManagers, null);
+                    Log.d("DEBUG-CERT", "Certificate Loaded onto sslContext");
+                } catch (Exception e) {
+                    Log.d("Certificate Error", "Error: "+e.getMessage());
+                    e.printStackTrace(); //TODO replace with real exception handling tailored to your needs
+                    return;
+                }
 
-                String serverAddress = "http://192.168.1.78:800/JSONGetter";
+                OkHttpClient client = new OkHttpClient()
+                        .setSslSocketFactory(sslContext.getSocketFactory());
+
+                Log.d("DEBUG-CERT", "Certificate Loaded onto client");
+
+                //OkHttpClient client = new OkHttpClient();
+                //SSLContext sslContext = SSLUtils
+                String serverAddress = "https://192.168.1.16/lara/public/JSONGetter";
                 if (serverAddress.contains("https")) {
-                    trustEveryone();
+                    //trustEveryone();
                     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                             .tlsVersions(TlsVersion.TLS_1_2)
                             .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
                             .supportsTlsExtensions(true)
                             .build();
-
-                    client.setConnectionSpecs(Collections.singletonList(spec));
-                    client.setHostnameVerifier(new HostnameVerifier() {
+                    HostnameVerifier hostnameVerifier = new HostnameVerifier() {
                         @Override
                         public boolean verify(String hostname, SSLSession session) {
-                            return true;
+                            HostnameVerifier hv =
+                                    HttpsURLConnection.getDefaultHostnameVerifier();
+                            return hv.verify("localhost", session);
                         }
-                    });
+                    };
+
+                    client.setHostnameVerifier(hostnameVerifier);
+                    client.setConnectionSpecs(Collections.singletonList(spec));
                     client.setConnectTimeout(1, TimeUnit.HOURS);
+                    Log.d("DEBUG-CERT", "Certificate Loaded onto connection spec");
                 }
 
                 JSONObject parameterSession = new JSONObject(params);
@@ -501,6 +580,7 @@ public class MainMenuActivity extends Activity{
                         .post(bodySession)
                         .build();
 
+                Log.d("DEBUG-CERT", "After Request");
 
                 client.newCall(requestSession).enqueue(new Callback() {
                     @Override
@@ -516,7 +596,7 @@ public class MainMenuActivity extends Activity{
                         else{
                             //We have a valid Session, therefore we must save the Hash to the
                             // Internal Memory
-
+                            Log.d("DEBUG-CERT", "Entered onResponse");
                             File sessionHash = new File(ins.getFilesDir(),"session.hash");
                             sessionHash.createNewFile();
                             FileOutputStream stream = new FileOutputStream(sessionHash,false);
@@ -731,25 +811,4 @@ public class MainMenuActivity extends Activity{
         //System.exit(0);
     }
 
-    private void trustEveryone() {
-        try {
-            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }});
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, new X509TrustManager[]{new X509TrustManager(){
-                public void checkClientTrusted(X509Certificate[] chain,
-                                               String authType) throws CertificateException {}
-                public void checkServerTrusted(X509Certificate[] chain,
-                                               String authType) throws CertificateException {}
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }}}, new SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(
-                    context.getSocketFactory());
-        } catch (Exception e) { // should never happen
-            e.printStackTrace();
-        }
-    }
 }

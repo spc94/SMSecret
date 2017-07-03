@@ -167,14 +167,17 @@ public class JunkInbox extends AppCompatActivity implements View.OnClickListener
         //Note - The number of textviews should depend on amount of different contacts and not messages
         final TextView[] myTextViews  = new TextView[size];
         contactsInView.clear();
-
+        int junkFlag;
         //for (int i = 1, j = 0; i < size+1; i++) {
         for (int i=db.getMaxIDJunk(),j = 0; i>=1;i-- )  {
-
             if(i == -1)
                 break;
-
-            int junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
+            try{
+                junkFlag = db.getMessageUnencrypted(i).getJunkFlag();
+            } catch (Exception e){
+                e.printStackTrace();
+                continue;
+            }
             if(junkFlag == 0){
                 continue;
             }

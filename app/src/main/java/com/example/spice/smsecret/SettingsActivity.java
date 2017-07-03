@@ -23,8 +23,11 @@ import android.widget.TextView;
 
 
 import com.example.spice.smsecret.Adapters.WhitelistAdapter;
+import com.example.spice.smsecret.Adapters.WhitelistWordAdapter;
 import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
+import com.example.spice.smsecret.DAL.WhitelistedWordsDAL;
 import com.example.spice.smsecret.Model.WhitelistedNumber;
+import com.example.spice.smsecret.Model.WhitelistedWord;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,22 +38,36 @@ public class SettingsActivity extends Activity {
     public String name = "";
     public String id;
     public String phone;
+    public String word = "";
     public ArrayList<String> array = new ArrayList<>();
+    public ArrayList<String> arrayWords = new ArrayList<>();
     public ListView listview;
+    public ListView listViewWord;
     public WhitelistAdapter whitelistAdapter;
+    public WhitelistWordAdapter whitelistWordAdapter;
 
     @Override
     protected void onResume() {
         super.onResume();
         array.clear();
+        arrayWords.clear();
         List<String> list = WhitelistedNumbersDAL.getAllWhitelistedNumbers();
         for(int i=0; i<list.size();i++){
             array.add(list.get(i));
         }
 
+        list = WhitelistedWordsDAL.getAllWhitelistedWords();
+        for(int i=0; i<list.size();i++){
+            arrayWords.add(list.get(i));
+        }
+
         whitelistAdapter= new WhitelistAdapter(this,array);
         listview.setAdapter(whitelistAdapter);
         whitelistAdapter.notifyDataSetChanged();
+
+        whitelistWordAdapter = new WhitelistWordAdapter(this,arrayWords);
+        listViewWord.setAdapter(whitelistWordAdapter);
+        whitelistWordAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -59,9 +76,12 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.activity_settings);
 
         final EditText etAddPhoneNumber = (EditText) findViewById(R.id.etAddPhoneNumber);
+        final EditText etAddWord = (EditText) findViewById(R.id.etAddWord);
         Button btContactFromPB = (Button) findViewById(R.id.btContactFromPB);
         final Button btConfirm = (Button) findViewById(R.id.btConfirmText);
+        final Button btConfirmWord = (Button) findViewById(R.id.btConfirmWord);
         listview = (ListView) findViewById(R.id.lvWhitelist);
+        listViewWord = (ListView) findViewById(R.id.lvWordlist);
 
 
         etAddPhoneNumber.addTextChangedListener(new TextWatcher() {
@@ -79,7 +99,29 @@ public class SettingsActivity extends Activity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                btConfirm.setVisibility(View.VISIBLE);
+                if(editable.length()>0)
+                    btConfirm.setVisibility(View.VISIBLE);
+
+            }
+        });
+
+
+        etAddWord.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(charSequence.length()==0)
+                    btConfirmWord.setVisibility(View.INVISIBLE);
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(editable.length()>0)
+                    btConfirmWord.setVisibility(View.VISIBLE);
 
             }
         });
@@ -107,6 +149,21 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        btConfirmWord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String word = etAddWord.getText().toString();
+                String lowerCaseWord = word.toLowerCase();
+                if(!WhitelistedWordsDAL.wordExistsInDB(lowerCaseWord)) {
+                    WhitelistedWordsDAL.saveWordToDB(lowerCaseWord);
+                    arrayWords.add(word);
+                    whitelistWordAdapter.notifyDataSetChanged();
+                }
+                hideSoftKeyboard();
+                etAddWord.setText("");
+            }
+        });
+
 
         //Adds to the Array all whitelisted contacts in the DB
         /*final List<String> list = WhitelistedNumbersDAL.getAllWhitelistedNumbers();
@@ -129,6 +186,17 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        listViewWord.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                String s = adapterView.getAdapter().getItem(i).toString();
+                WhitelistedWordsDAL.deleteFromDB(s);
+                arrayWords.remove(getItemIDFromWordString(s));
+                whitelistWordAdapter.notifyDataSetChanged();
+                return false;
+            }
+        });
 
     }
 
@@ -146,6 +214,15 @@ public class SettingsActivity extends Activity {
 
         for(int i=0; i<array.size(); i++){
             if(array.get(i).equals(s))
+                return i;
+        }
+        return -1;
+    }
+
+    public int getItemIDFromWordString(String s){
+
+        for(int i=0; i<arrayWords.size(); i++){
+            if(arrayWords.get(i).equals(s))
                 return i;
         }
         return -1;

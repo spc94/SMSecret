@@ -47,6 +47,7 @@ dependencies {
     // Older versions e.g. 2.2 may also work if you need support for older Android versions.
     compile 'com.google.zxing:core:3.0.1'
     compile 'com.github.halysongoncalves:pugnotification:1.8.1'
+    compile 'com.google.code.gson:gson:2.5'
 }
 
 repositories {

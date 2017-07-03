@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.example.spice.smsecret.DAL.WhitelistedNumbersDAL;
+import com.example.spice.smsecret.DAL.WhitelistedWordsDAL;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,6 +65,23 @@ public class SmsReceiver extends BroadcastReceiver {
                     for(int i=0;i<msgs.length;i++)
                         msg += msgs[i].getDisplayMessageBody();
                     senderNumber = msgs[0].getOriginatingAddress();
+
+                    // Check for Silent SMS
+                    if(msgs[0].getMessageClass().toString().equals(SmsMessage.MessageClass.CLASS_0)){
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(context)
+                                        .setSmallIcon(R.drawable.ic_launcher_white)
+                                        .setLargeIcon(BitmapFactory.decodeResource(context.getResources(),
+                                                R.mipmap.ic_launcher))
+                                        .setColor(Color.rgb(218,62,75))
+                                        .setContentTitle("SILENT SMS DETECTED")
+                                        .setContentText("Your phone is being tracked!")
+                                        .setAutoCancel(true);
+                        NotificationManager mNotifyMgr =
+                                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                        mNotifyMgr.notify(001, mBuilder.build());
+                    }
+
                 } else {
                     Object pdus[] = (Object[]) bundle.get("pdus");
                     for(int i=0;i<pdus.length;i++)
@@ -71,9 +89,12 @@ public class SmsReceiver extends BroadcastReceiver {
                     senderNumber = SmsMessage.createFromPdu((byte[])pdus[0]).getOriginatingAddress();
                 }
 
+
+
                 senderNumber = countryDialingCodeToZeroes(senderNumber);
                 Log.d("DEBUG","Number: "+senderNumber);
-                if(checkContactWhitelisted(senderNumber)) {
+                if(checkContactWhitelisted(senderNumber)
+                        || checkWordWhitelisted(msg)) {
                     Log.d("DEBUG","ENTERS IF");
                     abortBroadcast();
                     Log.d("DEB", "From: " + senderNumber + "\nMsg: " + msg);
@@ -94,7 +115,6 @@ public class SmsReceiver extends BroadcastReceiver {
                             EncryptedInbox.getInstance().textView, EncryptedInbox.getInstance().sizeOfTextViewArray);
                     EncryptedInbox.getInstance().initTextViewListeners();
                     EncryptedMessages.getInstance().initMessages(contact.getContactNumber());
-
                 }
                 else{
                     Log.d("DEBUG","ENTERS ELSE");
@@ -226,6 +246,17 @@ public class SmsReceiver extends BroadcastReceiver {
             if(listOfWhitelistedContacts.get(i).equals(senderNumber) ||
                     listOfWhitelistedContacts.get(i).equals(strippedNumber))
 
+                return true;
+        }
+        return false;
+    }
+
+    public boolean checkWordWhitelisted(String message){
+        java.util.List<String> listOfWhitelistedWords = WhitelistedWordsDAL.getAllWhitelistedWords();
+        //Change to lower case
+        String messageLowercase = message.toLowerCase();
+        for(int i=0; i<listOfWhitelistedWords.size();i++){
+            if(messageLowercase.contains(listOfWhitelistedWords.get(i).toLowerCase()))
                 return true;
         }
         return false;
