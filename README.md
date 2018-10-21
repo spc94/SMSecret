@@ -15,10 +15,16 @@ This project encompasses an Android App and a Web App. The objective was for the
 
 *The welcome screen of the Web App, the user must scan the QR code with the Mobile App to authenticate himself.*
 <p>&nbsp;</p>
+<p>&nbsp;</p
+
+<a href="url"><img src="https://github.com/spc94/SMSecret/blob/master/inbox-web.png?raw=true" height="60%" width="60%" aling="center"></a>
 <p>&nbsp;</p>
+*The Inbox of the Web App. The user can send and receive SMSs*
+
 
 <a href="url"><img src="https://github.com/spc94/SMSecret/blob/master/send-web.png" height="60%" width="60%" aling="center"></a>
-<p>*In this screen, the user is able to send an SMS through the Web App*</p>
+<p>&nbsp;</p>
+*In this screen, the user is able to send an SMS through the Web App*
 
 
 
